@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office du Viager – Intégration Widget AGO</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        h2 { font-size: 1.3rem; color: #555; margin-top: 2rem; }
+        pre {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+        }
+        code { font-family: "SF Mono", Menlo, monospace; }
+        .open-chat-btn {
+            display: inline-block;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .open-chat-btn:hover { background: #1d4ed8; }
+        .demo-section {
+            margin: 2rem 0;
+            padding: 24px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Intégration du widget AGO – Office du Viager</h1>
+<p>Cette page montre comment intégrer le chatbot AGO sur votre site.</p>
+
+<h2>1. Démo : bouton qui ouvre le chat</h2>
+<div class="demo-section">
+    <p>Cliquez sur le bouton ci-dessous pour ouvrir le chatbot :</p>
+    <button class="open-chat-btn" onclick="openAgoChat()">
+        Parler à un conseiller
+    </button>
+</div>
+
+<h2>2. Code d'intégration</h2>
+<p>Ajoutez ce code juste avant la balise <code>&lt;/body&gt;</code> de votre site :</p>
+<pre><code>&lt;script&gt;
+  window.AGO = {
+    basepath: "https://officeduviager.useago.com/",
+    widgetApiKey: "public-key-officeduviager",
+    title: "Office du Viager",
+    prompt: "Bonjour, comment puis-je vous aider ?",
+  };
+&lt;/script&gt;
+&lt;script async src="https://useago.github.io/widgetjs/frame.js"
+  integrity="sha384-Wi/9+SjBNo5RzusaT/Bd9lVkpQOLCtAg64N64o7lOw0O5Q40476mxRBRYwbQg1Lm"
+  crossorigin="anonymous"&gt;&lt;/script&gt;</code></pre>
+
+<h2>3. Bouton personnalisé pour ouvrir le chat</h2>
+<p>Pour ouvrir le widget depuis votre propre bouton :</p>
+<pre><code>&lt;button onclick="openAgoChat()"&gt;Parler à un conseiller&lt;/button&gt;
+
+&lt;script&gt;
+  function openAgoChat() {
+    const btn = document.querySelector("#ago-chat-button");
+    if (btn) {
+      // Si le chat est fermé, on l'ouvre
+      const chatbot = document.querySelector("#ago-chatbot");
+      if (chatbot &amp;&amp; chatbot.classList.contains("closed")) {
+        btn.click();
+      } else if (!chatbot) {
+        // Premier clic, le widget n'est pas encore chargé
+        btn.click();
+      }
+    }
+  }
+&lt;/script&gt;</code></pre>
+
+<h2>4. Options disponibles</h2>
+<pre><code>window.AGO = {
+  basepath: "https://officeduviager.useago.com/",  // URL de votre instance AGO
+  widgetApiKey: "public-key-officeduviager",        // Clé API publique
+  title: "Office du Viager",                        // Titre du chatbot
+  prompt: "Bonjour, comment puis-je vous aider ?",  // Message d'accueil
+  defaultAgent: "nom-de-l-agent",                   // Agent par défaut (optionnel)
+  email: "visiteur@example.com",                    // Email du visiteur (optionnel)
+  notifications: true,                              // Activer les notifications (optionnel)
+  hideFooter: false,                                // Masquer le footer (optionnel)
+  colors: {                                         // Personnalisation des couleurs (optionnel)
+    button: "#2563eb",           // Couleur du bouton flottant
+    header: "#2563eb",           // Couleur de l'en-tête
+    agentMessage: "#f3f4f6",     // Fond des messages de l'agent
+    agentMessageFont: "#333",    // Texte des messages de l'agent
+    userMessage: "#2563eb",      // Fond des messages de l'utilisateur
+    userMessageFont: "#fff",     // Texte des messages de l'utilisateur
+    background: "#fff",          // Fond de la fenêtre de chat
+    font: "#333",                // Couleur de texte générale
+  },
+};</code></pre>
+
+<!-- Widget AGO -->
+<script>
+    window.AGO = {
+        basepath: "https://officeduviager.useago.com/",
+        widgetApiKey: "public-key-officeduviager",
+        title: "Office du Viager",
+        prompt: "Bonjour, comment puis-je vous aider ?",
+    };
+
+    function openAgoChat() {
+        const btn = document.querySelector("#ago-chat-button");
+        if (btn) {
+            const chatbot = document.querySelector("#ago-chatbot");
+            if (!chatbot || chatbot.classList.contains("closed")) {
+                btn.click();
+            }
+        }
+    }
+</script>
+<script async src="https://useago.github.io/widgetjs/frame.js" integrity="sha384-Wi/9+SjBNo5RzusaT/Bd9lVkpQOLCtAg64N64o7lOw0O5Q40476mxRBRYwbQg1Lm" crossorigin="anonymous"></script>
+</body>
+</html>
