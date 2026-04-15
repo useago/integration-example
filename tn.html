@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TN – AGO Widget Integration</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        h2 { font-size: 1.3rem; color: #555; margin-top: 2rem; }
+        pre {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+        }
+        code { font-family: "SF Mono", Menlo, monospace; }
+        .open-chat-btn {
+            display: inline-block;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .open-chat-btn:hover { background: #1d4ed8; }
+        .demo-section {
+            margin: 2rem 0;
+            padding: 24px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<h1>AGO Widget Integration – TN</h1>
+<p>This page shows how to integrate the AGO chatbot widget using <code>https://tn.useago.com/</code>.</p>
+
+<h2>1. Demo: button that opens the chat</h2>
+<div class="demo-section">
+    <p>Click the button below to open the chatbot:</p>
+    <button class="open-chat-btn" onclick="openAgoChat()">
+        Chat with us
+    </button>
+</div>
+
+<h2>2. Integration code</h2>
+<p>Add this code just before the <code>&lt;/body&gt;</code> tag of your site:</p>
+<pre><code>&lt;script&gt;
+  window.AGO = {
+    basepath: "https://tn.useago.com/",
+    title: "TN",
+    prompt: "Hello, how can I help you?",
+  };
+&lt;/script&gt;
+&lt;script async src="https://useago.github.io/widgetjs/frame.js"
+  integrity="sha384-Wi/9+SjBNo5RzusaT/Bd9lVkpQOLCtAg64N64o7lOw0O5Q40476mxRBRYwbQg1Lm"
+  crossorigin="anonymous"&gt;&lt;/script&gt;</code></pre>
+
+<h2>3. Custom button to open the chat</h2>
+<p>To open the widget from your own button:</p>
+<pre><code>&lt;button onclick="openAgoChat()"&gt;Chat with us&lt;/button&gt;
+
+&lt;script&gt;
+  function openAgoChat() {
+    const btn = document.querySelector("#ago-chat-button");
+    if (btn) {
+      const chatbot = document.querySelector("#ago-chatbot");
+      if (chatbot &amp;&amp; chatbot.classList.contains("closed")) {
+        btn.click();
+      } else if (!chatbot) {
+        btn.click();
+      }
+    }
+  }
+&lt;/script&gt;</code></pre>
+
+<h2>4. Available options</h2>
+<pre><code>window.AGO = {
+  basepath: "https://tn.useago.com/",              // URL of your AGO instance
+  title: "TN",                                      // Chatbot title
+  prompt: "Hello, how can I help you?",             // Welcome message
+  defaultAgent: "agent-name",                       // Default agent (optional)
+  email: "visitor@example.com",                     // Visitor email (optional)
+  notifications: true,                              // Enable notifications (optional)
+  hideFooter: false,                                // Hide footer (optional)
+  colors: {                                         // Color customization (optional)
+    button: "#2563eb",           // Floating button color
+    header: "#2563eb",           // Header color
+    agentMessage: "#f3f4f6",     // Agent message background
+    agentMessageFont: "#333",    // Agent message text color
+    userMessage: "#2563eb",      // User message background
+    userMessageFont: "#fff",     // User message text color
+    background: "#fff",          // Chat window background
+    font: "#333",                // General text color
+  },
+};</code></pre>
+
+<!-- AGO Widget -->
+<script>
+    window.AGO = {
+        basepath: "https://tn.useago.com/",
+        title: "TN",
+        prompt: "Hello, how can I help you?",
+    };
+
+    function openAgoChat() {
+        const btn = document.querySelector("#ago-chat-button");
+        if (btn) {
+            const chatbot = document.querySelector("#ago-chatbot");
+            if (!chatbot || chatbot.classList.contains("closed")) {
+                btn.click();
+            }
+        }
+    }
+</script>
+<script async src="https://useago.github.io/widgetjs/frame.js" integrity="sha384-Wi/9+SjBNo5RzusaT/Bd9lVkpQOLCtAg64N64o7lOw0O5Q40476mxRBRYwbQg1Lm" crossorigin="anonymous"></script>
+</body>
+</html>
