@@ -1,0 +1,583 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(180deg, #eef4ff 0%, #dfe9ff 100%);
+  color: #0c1c3a;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+:root {
+  --chat-width: 420px;
+}
+
+.weendeal-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 20px;
+  transition: padding-left 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.weendeal-shell--chat-open {
+  padding-left: calc(var(--chat-width) + 24px);
+}
+
+/* Header */
+.weendeal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 18px 28px;
+  box-shadow: 0 6px 28px rgba(28, 65, 138, 0.12);
+}
+
+.weendeal-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.weendeal-logo {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.weendeal-header h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #0a4a8f;
+}
+
+.weendeal-tagline {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* Main : form middle, chat is fixed full-height on the left */
+.weendeal-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 0;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.weendeal-chat {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--chat-width);
+  height: 100dvh;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(28, 65, 138, 0.18);
+  border-right: 1px solid #d6deeb;
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  overflow: hidden;
+  transform: translateX(-100%);
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.weendeal-chat--open {
+  transform: translateX(0);
+}
+
+.weendeal-chat-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 10px 18px;
+  border-bottom: 1px solid #d6deeb;
+  background: #f7faff;
+  flex-shrink: 0;
+}
+
+.weendeal-chat-topbar-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.weendeal-chat-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #0a4a8f;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.weendeal-chat-close:hover {
+  background: rgba(10, 74, 143, 0.08);
+}
+
+.weendeal-chat-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* "Help" CTA — header & floating versions */
+.help-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #1976d2 0%, #0a4a8f 100%);
+  border: none;
+  border-radius: 999px;
+  padding: 11px 20px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(10, 74, 143, 0.28);
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.help-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(10, 74, 143, 0.36);
+}
+
+.help-cta-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.help-cta--floating {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 40;
+  padding: 13px 22px;
+  font-size: 15px;
+}
+
+.weendeal-shell--chat-open .help-cta--header {
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Inline link inside the form */
+.quote-help-row {
+  display: flex;
+  justify-content: center;
+  padding-top: 6px;
+}
+
+.quote-help-link {
+  background: transparent;
+  border: none;
+  color: #0a4a8f;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.quote-help-link span {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.quote-help-link:hover span {
+  color: #1976d2;
+}
+
+.weendeal-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+}
+
+/* Quote form card */
+.quote-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 6px 28px rgba(28, 65, 138, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.quote-card h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0a4a8f;
+}
+
+.quote-subtitle {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: -8px;
+  margin-bottom: 4px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0c1c3a;
+}
+
+input, select {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #d6deeb;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #0c1c3a;
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #0a4a8f;
+  box-shadow: 0 0 0 3px rgba(10, 74, 143, 0.14);
+}
+
+.radio-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.radio-option {
+  flex: 1;
+  min-width: 100px;
+  padding: 11px 16px;
+  background: #f4f7fc;
+  border: 1px solid #d6deeb;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0c1c3a;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.radio-option:hover {
+  background: #e7eef9;
+}
+
+.radio-option--selected {
+  background: #0a4a8f;
+  color: #fff;
+  border-color: #0a4a8f;
+}
+
+/* CTA row */
+.quote-summary {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+  padding-top: 18px;
+  border-top: 1px dashed #d6deeb;
+}
+
+.btn-primary {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #e63946 0%, #c92a36 100%);
+  border: none;
+  border-radius: 999px;
+  padding: 13px 26px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(230, 57, 70, 0.28);
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(230, 57, 70, 0.36);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0a4a8f;
+  background: #f4f7fc;
+  border: 1px solid #d6deeb;
+  border-radius: 999px;
+  padding: 11px 22px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #e7eef9;
+}
+
+/* Success card */
+.success-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: 0 6px 28px rgba(28, 65, 138, 0.12);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  color: #fff;
+  font-size: 36px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.32);
+}
+
+.success-card h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  color: #0a4a8f;
+}
+
+.success-list {
+  list-style: none;
+  width: 100%;
+  max-width: 420px;
+  background: #f4f7fc;
+  border: 1px solid #d6deeb;
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.success-list li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  gap: 12px;
+}
+
+.success-list li span:first-child {
+  color: #6b7280;
+}
+
+.success-note {
+  color: #6b7280;
+  font-size: 13px;
+  max-width: 420px;
+}
+
+/* ChatWidget overrides (left sidebar styling) */
+.weendeal-chat-body .ago-chat-widget {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+  border: none !important;
+  border-radius: 0 !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+/* The widget ships its own header — we already have .weendeal-chat-topbar, so hide it */
+.weendeal-chat-body .ago-chat-widget__header {
+  display: none !important;
+}
+
+.weendeal-chat-body .ago-chat-widget__messages {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  background-color: #f7faff !important;
+  padding: 20px !important;
+}
+
+.ago-message {
+  margin-bottom: 14px !important;
+}
+
+.ago-message--user {
+  display: flex !important;
+  justify-content: flex-end !important;
+}
+
+.ago-message--user .ago-message__content {
+  background: #0a4a8f !important;
+  color: #fff !important;
+  border-radius: 18px 18px 4px 18px !important;
+  max-width: 75% !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+}
+
+.ago-message--assistant {
+  display: flex !important;
+  justify-content: flex-start !important;
+}
+
+.ago-message--assistant .ago-message__content {
+  background: #fff !important;
+  color: #0c1c3a !important;
+  border-radius: 18px 18px 18px 4px !important;
+  max-width: 85% !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  border: 1px solid #d6deeb !important;
+}
+
+.weendeal-chat-body .ago-chat-input {
+  flex: 0 0 auto !important;
+  background-color: #fff !important;
+  border-top: 1px solid #d6deeb !important;
+  padding: 14px 18px !important;
+}
+
+.ago-chat-input__wrapper {
+  background-color: #f7faff !important;
+  border: 1px solid #d6deeb !important;
+  border-radius: 999px !important;
+  padding: 6px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.ago-chat-input__field {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  background: transparent !important;
+  padding: 6px 0 !important;
+}
+
+.ago-chat-input__submit {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #1976d2, #0a4a8f) !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.ago-chat-input__submit:disabled {
+  background: #d1d5db !important;
+  cursor: not-allowed !important;
+}
+
+.ago-chat-input__submit svg {
+  fill: #fff !important;
+}
+
+.ago-typing-indicator span {
+  background-color: #0a4a8f !important;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .weendeal-shell--chat-open {
+    padding-left: 24px;
+  }
+
+  .weendeal-chat {
+    width: min(420px, 92vw);
+  }
+
+  .weendeal-main {
+    max-width: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .weendeal-shell {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .weendeal-header {
+    padding: 14px 18px;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .weendeal-header h1 {
+    font-size: 22px;
+  }
+
+  .quote-card {
+    padding: 22px 18px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-summary {
+    justify-content: stretch;
+  }
+
+  .quote-summary .btn-primary {
+    width: 100%;
+  }
+}
