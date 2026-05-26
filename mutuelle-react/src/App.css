@@ -325,18 +325,19 @@ input:focus, select:focus {
   font-size: 15px;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #e63946 0%, #c92a36 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
   border: none;
   border-radius: 999px;
   padding: 13px 26px;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(230, 57, 70, 0.28);
-  transition: transform 0.1s ease, box-shadow 0.15s ease;
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.32);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(230, 57, 70, 0.36);
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.42);
+  filter: brightness(1.05);
 }
 
 .btn-primary:active {
