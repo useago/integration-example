@@ -3,27 +3,27 @@ export type Regime = 'salarie' | 'tns' | 'fonctionnaire' | 'retraite' | 'etudian
 export type Niveau = 'eco' | 'equilibre' | 'confort';
 
 export interface QuoteState {
-  profil: Profil;
-  adultes: number;
-  enfants: number;
-  regime: Regime;
+  profil: Profil | null;
+  adultes: number | null;
+  enfants: number | null;
+  regime: Regime | null;
   dateNaissance: string;
   codePostal: string;
   dateEffet: string;
-  niveau: Niveau;
+  niveau: Niveau | null;
   email: string;
   telephone: string;
 }
 
 export const INITIAL_QUOTE: QuoteState = {
-  profil: 'me',
-  adultes: 1,
-  enfants: 0,
-  regime: 'salarie',
+  profil: null,
+  adultes: null,
+  enfants: null,
+  regime: null,
   dateNaissance: '',
   codePostal: '',
   dateEffet: '',
-  niveau: 'equilibre',
+  niveau: null,
   email: '',
   telephone: '',
 };
@@ -62,9 +62,11 @@ const REGIME_MULT: Record<Regime, number> = {
   etudiant: 0.7,
 };
 
-export function computeMonthlyPrice(state: QuoteState): number {
+export function computeMonthlyPrice(state: QuoteState): number | null {
+  if (!state.niveau || !state.regime || state.adultes == null) return null;
   const base = NIVEAU_BASE[state.niveau];
-  const peoplePrice = base * state.adultes + base * 0.5 * state.enfants;
+  const enfants = state.enfants ?? 0;
+  const peoplePrice = base * state.adultes + base * 0.5 * enfants;
   const total = peoplePrice * REGIME_MULT[state.regime];
   return Math.round(total * 100) / 100;
 }

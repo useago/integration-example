@@ -58,11 +58,11 @@ export default function App() {
       description:
         "État actuel du formulaire de devis mutuelle santé. Les champs vides ou non renseignés sont à null. Utilise ces valeurs pour ne pas redemander d'informations déjà fournies.",
       data: {
-        profil: { id: q.profil, label: PROFIL_LABELS[q.profil] },
+        profil: q.profil ? { id: q.profil, label: PROFIL_LABELS[q.profil] } : null,
         adultes: q.adultes,
         enfants: q.enfants,
-        regime: { id: q.regime, label: REGIME_LABELS[q.regime] },
-        niveau: { id: q.niveau, label: NIVEAU_LABELS[q.niveau] },
+        regime: q.regime ? { id: q.regime, label: REGIME_LABELS[q.regime] } : null,
+        niveau: q.niveau ? { id: q.niveau, label: NIVEAU_LABELS[q.niveau] } : null,
         dateNaissance: q.dateNaissance || null,
         codePostal: q.codePostal || null,
         dateEffet: q.dateEffet || null,
@@ -151,7 +151,7 @@ export default function App() {
                       type="button"
                       className={`radio-option${quote.profil === p ? ' radio-option--selected' : ''}`}
                       onClick={() => {
-                        const adultes = p === 'me' ? 1 : p === 'couple' ? 2 : Math.max(quote.adultes, 2);
+                        const adultes = p === 'me' ? 1 : p === 'couple' ? 2 : Math.max(quote.adultes ?? 2, 2);
                         setQuote({ ...quote, profil: p, adultes });
                       }}
                     >
@@ -166,9 +166,10 @@ export default function App() {
                   <label htmlFor="adultes" className="form-label">Adultes</label>
                   <select
                     id="adultes"
-                    value={quote.adultes}
-                    onChange={(e) => update('adultes', Number(e.target.value))}
+                    value={quote.adultes ?? ''}
+                    onChange={(e) => update('adultes', e.target.value === '' ? null : Number(e.target.value))}
                   >
+                    <option value="">—</option>
                     <option value={1}>1</option>
                     <option value={2}>2</option>
                   </select>
@@ -177,9 +178,10 @@ export default function App() {
                   <label htmlFor="enfants" className="form-label">Enfants</label>
                   <select
                     id="enfants"
-                    value={quote.enfants}
-                    onChange={(e) => update('enfants', Number(e.target.value))}
+                    value={quote.enfants ?? ''}
+                    onChange={(e) => update('enfants', e.target.value === '' ? null : Number(e.target.value))}
                   >
+                    <option value="">—</option>
                     {[0, 1, 2, 3, 4, 5, 6].map((n) => (
                       <option key={n} value={n}>{n}</option>
                     ))}
@@ -191,9 +193,10 @@ export default function App() {
                 <label htmlFor="regime" className="form-label">Régime social</label>
                 <select
                   id="regime"
-                  value={quote.regime}
-                  onChange={(e) => update('regime', e.target.value as Regime)}
+                  value={quote.regime ?? ''}
+                  onChange={(e) => update('regime', e.target.value === '' ? null : (e.target.value as Regime))}
                 >
+                  <option value="">Sélectionnez votre régime</option>
                   {(Object.keys(REGIME_LABELS) as Regime[]).map((r) => (
                     <option key={r} value={r}>{REGIME_LABELS[r]}</option>
                   ))}
@@ -307,10 +310,10 @@ function SuccessCard({ submitted, onReset }: { submitted: SubmittedQuote; onRese
         Référence&nbsp;: <strong>{reference}</strong>
       </p>
       <ul className="success-list">
-        <li><span>Profil</span><span>{PROFIL_LABELS[state.profil]}</span></li>
-        <li><span>Foyer</span><span>{state.adultes} adulte{state.adultes > 1 ? 's' : ''}{state.enfants > 0 ? ` · ${state.enfants} enfant${state.enfants > 1 ? 's' : ''}` : ''}</span></li>
-        <li><span>Régime</span><span>{REGIME_LABELS[state.regime]}</span></li>
-        <li><span>Niveau</span><span>{NIVEAU_LABELS[state.niveau]}</span></li>
+        <li><span>Profil</span><span>{state.profil ? PROFIL_LABELS[state.profil] : '—'}</span></li>
+        <li><span>Foyer</span><span>{state.adultes ?? 0} adulte{(state.adultes ?? 0) > 1 ? 's' : ''}{(state.enfants ?? 0) > 0 ? ` · ${state.enfants} enfant${(state.enfants ?? 0) > 1 ? 's' : ''}` : ''}</span></li>
+        <li><span>Régime</span><span>{state.regime ? REGIME_LABELS[state.regime] : '—'}</span></li>
+        <li><span>Niveau</span><span>{state.niveau ? NIVEAU_LABELS[state.niveau] : '—'}</span></li>
       </ul>
       <p className="success-note">
         Un conseiller assurance AGO vous recontacte sous 24h

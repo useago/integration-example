@@ -18,14 +18,14 @@ export interface QuoteStore {
 
 function summarize(state: QuoteState) {
   return {
-    profil: PROFIL_LABELS[state.profil],
+    profil: state.profil ? PROFIL_LABELS[state.profil] : null,
     adultes: state.adultes,
     enfants: state.enfants,
-    regime: REGIME_LABELS[state.regime],
+    regime: state.regime ? REGIME_LABELS[state.regime] : null,
     dateNaissance: state.dateNaissance || null,
     codePostal: state.codePostal || null,
     dateEffet: state.dateEffet || null,
-    niveau: NIVEAU_LABELS[state.niveau],
+    niveau: state.niveau ? NIVEAU_LABELS[state.niveau] : null,
     email: state.email || null,
     telephone: state.telephone || null,
     monthlyPriceEuros: computeMonthlyPrice(state),
@@ -49,7 +49,7 @@ export function buildMutuelleFunctions(store: QuoteStore) {
         return { ok: false, error: `Profil inconnu : ${profil}` };
       }
       const cur = store.get();
-      const adultes = profil === 'me' ? 1 : profil === 'couple' ? 2 : Math.max(cur.adultes, 2);
+      const adultes = profil === 'me' ? 1 : profil === 'couple' ? 2 : Math.max(cur.adultes ?? 2, 2);
       store.set({ ...cur, profil, adultes });
       return { ok: true, profil: PROFIL_LABELS[profil], adultes };
     },
@@ -68,7 +68,7 @@ export function buildMutuelleFunctions(store: QuoteStore) {
     handler: async (args: Record<string, unknown>) => {
       const cur = store.get();
       const adultes = typeof args.adultes === 'number' ? Math.max(1, Math.min(2, Math.round(Number(args.adultes)))) : cur.adultes;
-      const enfants = typeof args.enfants === 'number' ? Math.max(0, Math.min(6, Math.round(Number(args.enfants)))) : cur.enfants;
+      const enfants = typeof args.enfants === 'number' ? Math.max(0, Math.min(6, Math.round(Number(args.enfants)))) : (cur.enfants ?? 0);
       store.set({ ...cur, adultes, enfants });
       return { ok: true, adultes, enfants };
     },
