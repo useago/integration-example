@@ -60,26 +60,19 @@ import { AgoClient } from "@useago/sdk";
 
 const client = new AgoClient({
   baseUrl: "https://weendeal.api.useago.com",
-  widgetId: "ago_widget__U_0uoreN3HwElvncdL8v2fPLdsD9xAZbc1KIFOry2E",
   defaultAgentId: "credit",
   debug: DEV,
 });
 ```
 
-> Example: [src/main.js:19-26](src/main.js#L19-L26).
-
 ### `AgoConfig`
 
-| Option           | Type      | Required | Purpose                                                                             |
-| ---------------- | --------- | -------- | ----------------------------------------------------------------------------------- |
-| `baseUrl`        | `string`  | yes      | AGO API host the widget talks to.                                                   |
-| `widgetId`       | `string`  | no       | Identifies the widget; sent as the `X-Widget-Id` header. Auto-generated if omitted. |
-| `agent`          | `string`  | no       | Default agent (id or slug) for new conversations. Preferred over `defaultAgentId`.  |
-| `defaultAgentId` | `string`  | no       | Default agent id for new conversations. Shorthand alias is `agent`.                 |
-| `permission`     | `string`  | no       | Permission name applied to all requests (sent as `X-Widget-Permission`).            |
-| `userEmail`      | `string`  | no       | User email for identification.                                                      |
-| `userJwt`        | `string`  | no       | JWT for authenticated users.                                                        |
-| `debug`          | `boolean` | no       | Enables SDK console logging.                                                        |
+| Option     | Type      | Required | Purpose                                                                             |
+| ---------- | --------- | -------- | ----------------------------------------------------------------------------------- |
+| `baseUrl`  | `string`  | yes      | AGO API host the widget talks to.                                                   |
+| `widgetId` | `string`  | no       | Identifies the widget; sent as the `X-Widget-Id` header. Auto-generated if omitted. |
+| `agent`    | `string`  | no       | Default agent (id or slug) for new conversations. Preferred over `defaultAgentId`.  |
+| `debug`    | `boolean` | no       | Enables SDK console logging.                                                        |
 
 Config can be changed after construction with `client.updateConfig(partial)`. To skip
 hand-writing this object entirely, see [Zero-config init](#zero-config-init).
@@ -102,7 +95,11 @@ the final message once the stream completes — but you typically render from th
 existing `conversationId` to continue a thread; omit it on the first turn and read
 the id back off `message:complete`.
 
-> Example: [src/main.js:148-161](src/main.js#L148-L161).
+> **Example** ([src/main.js](src/main.js)):
+>
+> ```js
+> await client.sendMessage(content, { conversationId });
+> ```
 
 ### `SendMessageOptions`
 
@@ -132,16 +129,19 @@ The reply streams over Server-Sent Events. Subscribe with `client.on(event, hand
 | `function:result`   | `{ invocationId, result, error? }`       | A client function finished; its result was returned to the agent.               |
 | `connection:status` | `{ connected }`                          | Connection state changes.                                                       |
 
-```js
-client.on("message:chunk", ({ messageId, content }) => {
-  const raw = (rawText.get(messageId) ?? "") + content;
-  rawText.set(messageId, raw);
-  bubbles.get(messageId).querySelector(".bubble").innerHTML =
-    renderMarkdown(raw);
-});
-```
-
-> Example: [src/main.js:90-145](src/main.js#L90-L145).
+> **Example** ([src/main.js](src/main.js)):
+>
+> ```js
+> client.on("message:start", ({ messageId }) => {
+>   /* create bubble */
+> });
+> client.on("message:chunk", ({ messageId, content }) => {
+>   /* append delta */
+> });
+> client.on("message:complete", (msg) => {
+>   conversationId = msg.conversationId;
+> });
+> ```
 
 > `message:chunk` carries only the new delta — accumulate it yourself.
 > `message:complete` then delivers the whole, final message (with `sources`), so use
@@ -159,13 +159,11 @@ client.on("message:chunk", ({ messageId, content }) => {
 ## Client functions
 
 A client function is browser-side code the **agent** can call mid-turn to read or
-mutate page state. You declare it, register it on the client, and the SDK runs your
-handler and returns its value to the agent automatically.
+mutate page state.
 
 ### 1. Define
 
-`defineFunction(definition)` is an identity helper — it returns the object unchanged,
-but gives you types and a stable `.name` to reuse. A definition is four fields:
+`defineFunction(definition)`
 
 | Field         | Type                     | Purpose                                                                                                |
 | ------------- | ------------------------ | ------------------------------------------------------------------------------------------------------ |
@@ -174,46 +172,21 @@ but gives you types and a stable `.name` to reuse. A definition is four fields:
 | `parameters`  | JSON-Schema object       | `{ type: "object", properties, required? }`. Each property: `{ type, description?, enum?, default? }`. |
 | `handler`     | `async (args) => result` | Runs in the browser; the return value is sent back to the agent. Must be JSON-serializable.            |
 
-```js
-import { defineFunction } from "@useago/sdk";
-
-const updateRequest = defineFunction({
-  name: "updateRequest",
-  description: CREDIT_SCHEMA.updateRequestDescription, // the "when to call me" prompt
-  parameters: { type: "object", properties: buildProperties() }, // built from the schema
-  handler: async (args) => {
-    /* merge args into state, see step 3 */
-  },
-});
-```
-
-> Example: the definition is [src/credit/agentFunctions.js:37-70](src/credit/agentFunctions.js#L37-L70);
-> `description` comes from [src/credit/schema.js:3-6](src/credit/schema.js#L3-L6).
-
-`parameters` is plain [JSON Schema](https://json-schema.org/). `buildProperties()`
-turns the field list into a `properties` map — each field becomes a typed property,
-and `enum` fields list their allowed values so the model can only pick valid ones:
-
-```js
-function buildProperties() {
-  const properties = {};
-  for (const f of CREDIT_SCHEMA.fields) {
-    const prop = { type: f.type };
-    if (f.description) prop.description = f.description;
-    if (f.enum) prop.enum = f.enum.map((o) => o.value);
-    properties[f.key] = prop;
-  }
-  return properties;
-}
-```
-
-> Example: [src/credit/agentFunctions.js:7-16](src/credit/agentFunctions.js#L7-L16).
+> **Example** ([src/credit/agentFunctions.js](src/credit/agentFunctions.js), with
+> `description` from [src/credit/schema.js](src/credit/schema.js)):
+>
+> ```js
+> const updateRequest = defineFunction({
+>   name: "updateRequest",
+>   description: CREDIT_SCHEMA.updateRequestDescription,
+>   parameters: { type: "object", properties: buildProperties() },
+>   handler: async (args) => {
+>     /* apply known fields to store */
+>   },
+> });
+> ```
 
 ### 2. Register
-
-Registering a function sends its **schema** (name + description + parameters, not the
-handler) to the agent on the next [`sendMessage`](#sending-messages), so the model
-knows the function exists and what arguments it takes.
 
 | Method                                    | Accepts                                     |
 | ----------------------------------------- | ------------------------------------------- |
@@ -229,23 +202,14 @@ export function buildCreditFunctions(store) {
   const updateRequest = defineFunction({
     /* … */
   });
-  const submitRequest = defineFunction({
-    /* … */
-  });
-  return { updateRequest, submitRequest };
+  return { updateRequest };
 }
 
 // main.js — register every value of that object at once
 client.register(Object.values(buildCreditFunctions(store)));
 ```
 
-> Example: factory at [src/credit/agentFunctions.js:34-90](src/credit/agentFunctions.js#L34-L90),
-> registration at [src/main.js:56](src/main.js#L56).
-> `getRegisteredFunctions()` is used to list the wired functions in the dev panel
-> ([src/services/devPanel.js:55-56](src/services/devPanel.js#L55-L56)).
-> Re-registering the same `name` overwrites the previous one (logged in debug mode).
-
-### 3. Invocation (the round trip)
+### 3. Invocation
 
 When the agent decides to call a function, the SDK handles the whole round trip and
 emits two events you can observe:
@@ -257,40 +221,7 @@ emits two events you can observe:
    the handler threw, its error message) is sent back to the agent, which continues the
    turn with that result.
 
-The handler is where your code does the real work. This project's `updateRequest`
-merges the fields it recognises, persists the new
-state via `store.set`, and returns **only what changed** — the full state already
-travels with every message as [context](#context):
-
-```js
-handler: async (args) => {
-  const next = { ...store.get() };
-  const applied = [];
-  const rejected = [];
-  for (const [key, value] of Object.entries(args ?? {})) {
-    const field = fieldsByKey.get(key);
-    if (!field || value === undefined) continue;
-    if (field.enum && !field.enum.some((o) => o.value === value)) {
-      rejected.push(`${key}=${value}`); // keep the rest of the call
-      continue;
-    }
-    next[key] = value;
-    applied.push(key);
-  }
-  store.set(next); // persist + re-render (see Context)
-  // `pick(summarize(next), applied)` = just the fields that changed, in label form
-  const result = { ok: true, updated: pick(summarize(next), applied) };
-  if (rejected.length) result.rejected = rejected;
-  return result;
-};
-```
-
-> Example: full handler at [src/credit/agentFunctions.js:41-69](src/credit/agentFunctions.js#L41-L69);
-> the `submitRequest` handler ([src/credit/agentFunctions.js:76-86](src/credit/agentFunctions.js#L76-L86))
-> shows returning an error result (`{ ok: false, error }`) instead of throwing.
-
-> A handler that throws is caught by the SDK: the error message is returned to the
-> agent and surfaced on `function:result.error`, so the turn never hangs.
+> Example: full handler in [src/credit/agentFunctions.js](src/credit/agentFunctions.js).
 
 Subscribe to the two events to trace calls live — the dev panel does exactly this,
 logging each invocation and its result:
@@ -304,12 +235,11 @@ client.on("function:result", ({ result, error }) => {
 });
 ```
 
-> Example: [src/services/devPanel.js:94-102](src/services/devPanel.js#L94-L102).
+> Example: [src/services/devPanel.js](src/services/devPanel.js).
 
 ## Context
 
-Context is structured data sent with **every** message so the agent always knows the
-user's situation. Two kinds:
+Context is structured data sent with **every** message.
 
 | Method                             | Kind    | Evaluated              | Use for                                               |
 | ---------------------------------- | ------- | ---------------------- | ----------------------------------------------------- |
@@ -320,48 +250,14 @@ user's situation. Two kinds:
 | `enableAutoPageContext()`          | dynamic | on every `sendMessage` | Auto-attach URL + page title (key `browser-page`).    |
 | `getContextSnapshot()`             | —       | now                    | Inspect what would be sent (`{ entries }` or `null`). |
 
-A dynamic provider is a function returning a `ContextEntry` (`{ name?, description?,
-data? }`), or `null`/`undefined` to contribute nothing this turn. Register it once;
-the SDK calls it on every send:
-
-```js
-client.addDynamicContext("credit-request-state", () => ({
-  name: "Demande de regroupement de crédits en cours",
-  description:
-    "État actuel de la demande. Champs vides = null; ne pas redemander ce qui est déjà rempli.",
-  data: summarize(request), // re-read on every send
-}));
-```
-
-> Example: [src/main.js:58-63](src/main.js#L58-L63).
-
-`data` doesn't have to be the raw state. Here `summarize(request)` projects it into
-agent-friendly values — enum codes become their human labels and empty strings become
-`null` — so the model reads `"Propriétaire"` rather than `"proprietaire"`
-([src/credit/agentFunctions.js:19-26](src/credit/agentFunctions.js#L19-L26)).
-
-### Keeping the provider's source fresh
-
-The provider reads `request`, but it's the function handlers that change it. The two
-are linked through a small `store`: every `store.set` reassigns `request`, persists it,
-and re-renders — so the next send's `summarize(request)` reflects the latest write
-without any extra wiring.
-
-```js
-const store = {
-  get: () => request,
-  set: (next) => {
-    request = next; // the same `request` the provider reads
-    saveRequest(conversationId, request);
-    if (DEV) renderDevPanel();
-  },
-};
-```
-
-> Example: [src/main.js:44-55](src/main.js#L44-L55). The
-> [`updateRequest` handler](#3-invocation-the-round-trip) calls `store.set`, closing the
-> loop: agent calls function → handler writes state → next message carries the new state
-> as context.
+> **Example** ([src/main.js](src/main.js)):
+>
+> ```js
+> client.addDynamicContext("credit-request-state", () => ({
+>   name: "Demande de regroupement de crédits en cours",
+>   data: summarize(request),
+> }));
+> ```
 
 ## Conversation history
 
@@ -374,14 +270,10 @@ for (const m of conv?.messages ?? []) {
 }
 ```
 
-> Example: [src/main.js:186-207](src/main.js#L186-L207) restores the saved
+> Example: [src/main.js](src/main.js) (`restoreConversation`) restores the saved
 > conversation on reload.
 
----
-
 # Also available in the SDK
-
-Features the SDK provides that this project doesn't wire up — drop-in when needed.
 
 ## Conversation list & feedback
 

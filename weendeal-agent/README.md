@@ -24,9 +24,8 @@ It opens `http://localhost:5173` and also prints an **External** URL (e.g.
   - `src/main.js` — SDK init, page context, streaming, message rendering, and the function wiring (module entry).
   - `src/credit/` — the loan-consolidation feature:
     - `src/credit/schema.js` — the field contract for the JSON object the agent builds (the single source of truth).
-    - `src/credit/model.js` — the request model: initial blank state + enum-label lookup, derived from the schema.
-    - `src/credit/estimate.js` — indicative monthly-payment / debt-ratio calc for the client summary
-    - `src/credit/agentFunctions.js` — the `updateRequest` / `submitRequest` functions the agent calls, generic over the schema.
+    - `src/credit/helpers.js` — schema-derived helpers: blank / hydrated request state + enum-label lookup.
+    - `src/credit/agentFunctions.js` — the `updateRequest` function the agent calls, generic over the schema.
   - `src/services/` — feature-agnostic infrastructure:
     - `src/services/sessionStore.js` — persists the conversation id **and** the in-progress request object to `localStorage` (restored on reload, cleared together via `clearSession()`).
     - `src/services/markdown.js` — renders assistant replies from markdown to safe HTML.
@@ -53,17 +52,10 @@ calling functions we registered.
   everything it can infer from a message in a single call (e.g. "propriétaire, 3000 €/mois, 2
   crédits pour 25000 €" → one call setting four fields). The handler merges only known keys into
   the state object.
-- **`submitRequest()`** — explicit send; requires an email or phone, returns a `WD-…` reference.
 
-The whole shape is **schema-driven**: `src/credit/schema.js` is the single source of truth, and the
-initial state, the function parameter schemas, the labels, and the dynamic context are all
-derived from it.
+## Submitting the request — _not yet implemented_
 
-> Important: the schema must cover **every** field the agent asks about. The `credit` agent runs
-> its own scripted question flow (housing status → estimation → regroupement type → co-borrower →
-> family situation → income/charges → existing credits → treasury/duration → contact). If the user
-> answers a question that has no matching field in `src/credit/schema.js`, the agent calls
-> `updateRequest` with an **empty object**.
+> 🚧 Planned as a server-side `submitRequest` tool, with client-side validation before the API call.
 
 ## Dev mode
 
@@ -71,5 +63,5 @@ The **DEV TOOLS** panel is **off by default**. Turn it on by adding `?dev` to th
 `http://localhost:5173/?dev`), or by setting `window.AGO_DEV = true` before `src/main.js` loads.
 The same flag also drives the SDK client's `debug` logging.
 
-When on, the panel (top-right) shows the live JSON object as the agent builds it, the computed
-monthly payment / debt ratio, and a log of every `updateRequest` / `submitRequest` call.
+When on, the panel (top-right) shows the live JSON object as the agent builds it and a log of every
+`updateRequest` call.
