@@ -2,8 +2,8 @@
 // builds it, plus a live log of function calls. Gated by config.DEV (see main.js) — never
 // shown in production. initDevPanel mounts the panel into an optional `target` (an Element or
 // a CSS selector), defaulting to <body>.
-let stateEl; // <pre> mirroring the current JSON object
-let logEl; // call log container
+let stateEl;
+let logEl;
 let getStateFn = () => ({});
 
 // Re-render the JSON object. Called by the store on every state change.

@@ -21,18 +21,23 @@ export function saveConversationId(id) {
   }
 }
 
-export function loadRequest() {
+export function loadRequest(conversationId) {
   try {
     const raw = localStorage.getItem(REQUEST_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const saved = JSON.parse(raw);
+    return saved && saved.id === conversationId ? saved.request : null;
   } catch {
     return null; // disabled storage or malformed JSON — treat as no saved state
   }
 }
 
-export function saveRequest(request) {
+export function saveRequest(conversationId, request) {
   try {
-    localStorage.setItem(REQUEST_KEY, JSON.stringify(request));
+    localStorage.setItem(
+      REQUEST_KEY,
+      JSON.stringify({ id: conversationId ?? null, request }),
+    );
   } catch {
     /* storage disabled / quota — nothing to persist, ignore */
   }

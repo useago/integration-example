@@ -1,5 +1,5 @@
 import { AgoClient } from "@useago/sdk";
-import { buildCreditFunctions } from "./credit/agentFunctions.js";
+import { buildCreditFunctions, summarize } from "./credit/agentFunctions.js";
 import { INITIAL_REQUEST } from "./credit/model.js";
 import { initDevPanel, renderDevPanel } from "./services/devPanel.js";
 import { renderMarkdown } from "./services/markdown.js";
@@ -12,26 +12,32 @@ import {
 } from "./services/sessionStore.js";
 
 // ─── Dev flag ─────────────────────────────────────────────────────
-// Hardcoded ON for demonstration purposes rendering dev panel
-const DEV = true;
+
+const DEV = window.AGO_DEV ?? new URLSearchParams(location.search).has("dev");
 
 // ─── Configuration ────────────────────────────────────────────────
 const client = new AgoClient({
-  baseUrl: "https://weendeal.api.useago.com",
-  widgetId: "ago_widget__U_0uoreN3HwElvncdL8v2fPLdsD9xAZbc1KIFOry2E",
+  baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
+  widgetId:
+    window.AGO_WIDGET_ID ??
+    "ago_widget__U_0uoreN3HwElvncdL8v2fPLdsD9xAZbc1KIFOry2E",
   defaultAgentId: "credit",
-  debug: true,
+  debug: DEV,
 });
 
 let conversationId = loadConversationId(); // keeps the thread across turns and reloads
 let request = structuredClone(INITIAL_REQUEST);
 // Restore the in-progress request saved with this conversation — known keys only, so a
-// changed schema can't reintroduce removed fields. No conversation → drop any orphan.
-const savedRequest = conversationId ? loadRequest() : null;
+// changed schema can't reintroduce removed fields.
+const savedRequest = conversationId ? loadRequest(conversationId) : null;
 if (savedRequest) {
   for (const k of Object.keys(request)) {
     if (k in savedRequest) request[k] = savedRequest[k];
   }
+} else if (conversationId) {
+  console.warn(
+    "Restored conversation without local request state — context starts blank.",
+  );
 } else {
   clearSession();
 }
@@ -39,7 +45,7 @@ const store = {
   get: () => request,
   set: (next) => {
     request = next;
-    saveRequest(request);
+    saveRequest(conversationId, request);
     if (DEV) renderDevPanel();
   },
   submit: () => ({
@@ -49,13 +55,11 @@ const store = {
 };
 client.register(Object.values(buildCreditFunctions(store)));
 
-// ─── Context: what the agent knows about the page ─────────────────
-client.enableAutoPageContext();
 client.addDynamicContext("credit-request-state", () => ({
   name: "Demande de regroupement de crédits en cours",
   description:
     "État actuel de la demande. Champs vides = null; ne pas redemander ce qui est déjà rempli.",
-  data: request,
+  data: summarize(request),
 }));
 
 if (DEV) initDevPanel({ getState: store.get, client });
@@ -104,10 +108,14 @@ client.on("message:chunk", ({ messageId, content }) => {
 client.on("message:complete", (msg) => {
   conversationId = msg.conversationId;
   saveConversationId(conversationId);
+  // First turn: the request was saved before we had a conversation id — rebind it now so the
+  // stored state and the thread share the same id (see loadRequest's match check).
+  saveRequest(conversationId, request);
   const wrap = bubbles.get(msg.id);
   if (wrap) {
     wrap.classList.remove("streaming");
     wrap.querySelector(".bubble").innerHTML = renderMarkdown(msg.content);
+    bubbles.delete(msg.id);
     rawText.delete(msg.id);
     if (msg.sources?.length) {
       const s = document.createElement("div");
