@@ -77,6 +77,42 @@ function addMessage(role, text = "") {
   return wrap;
 }
 
+// Render follow-up reply pills under an assistant bubble; clicking one sends it.
+function renderSuggestions(wrap, replies) {
+  if (!replies?.length) return;
+  const box = document.createElement("div");
+  box.className = "suggested-replies";
+  for (const text of replies) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "reply-btn";
+    btn.textContent = text;
+    btn.addEventListener("click", () => sendMessage(text));
+    box.appendChild(btn);
+  }
+  wrap.appendChild(box);
+}
+
+// Suggestions only belong under the latest assistant message.
+function clearSuggestions() {
+  log.querySelectorAll(".suggested-replies").forEach((el) => el.remove());
+}
+
+async function sendMessage(content) {
+  const trimmed = content.trim();
+  if (!trimmed) return;
+  clearSuggestions();
+  addMessage("user", trimmed);
+  input.value = "";
+  sendBtn.disabled = true;
+  try {
+    await client.sendMessage(trimmed, { conversationId });
+  } catch (err) {
+    addMessage("assistant", "⚠️ " + (err?.message ?? err));
+    sendBtn.disabled = false;
+  }
+}
+
 // ─── Streaming wiring ──────────────────────────────────────────────
 client.on("message:start", ({ messageId }) => {
   const wrap = addMessage("assistant");
@@ -119,6 +155,7 @@ client.on("message:complete", (msg) => {
           .join(" · ");
       wrap.appendChild(s);
     }
+    renderSuggestions(wrap, msg.followUpReplies);
   }
   statusEl.textContent = "prêt";
   statusEl.classList.remove("live");
@@ -133,19 +170,9 @@ client.on("message:error", ({ error }) => {
 });
 
 // ─── Sending ────────────────────────────────────────────────────────
-form.addEventListener("submit", async (e) => {
+form.addEventListener("submit", (e) => {
   e.preventDefault();
-  const content = input.value.trim();
-  if (!content) return;
-  addMessage("user", content);
-  input.value = "";
-  sendBtn.disabled = true;
-  try {
-    await client.sendMessage(content, { conversationId });
-  } catch (err) {
-    addMessage("assistant", "⚠️ " + (err?.message ?? err));
-    sendBtn.disabled = false;
-  }
+  sendMessage(input.value);
 });
 
 // Enter = send, Shift+Enter = new line
@@ -175,13 +202,18 @@ async function restoreConversation() {
   if (!conversationId) return;
   try {
     const conv = await client.getConversation(conversationId);
-    for (const m of conv?.messages ?? []) {
+    const messages = conv?.messages ?? [];
+    messages.forEach((m, i) => {
       const wrap = addMessage(m.role === "user" ? "user" : "assistant");
       const bubble = wrap.querySelector(".bubble");
       // User text is plain; assistant replies are markdown (matches live rendering).
       if (m.role === "user") bubble.textContent = m.content;
       else bubble.innerHTML = renderMarkdown(m.content ?? "");
-    }
+      // Keep suggestions only under the final assistant message (best-effort: history may omit them).
+      if (m.role === "assistant" && i === messages.length - 1) {
+        renderSuggestions(wrap, m.followUpReplies);
+      }
+    });
     log.scrollTop = log.scrollHeight;
   } catch {
     // Conversation expired/deleted or network error — start fresh.
