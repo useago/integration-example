@@ -1,6 +1,6 @@
 import { AgoClient } from "@useago/sdk";
-import { buildCreditFunctions, summarize } from "./credit/agentFunctions.js";
-import { INITIAL_REQUEST } from "./credit/model.js";
+import { buildCreditFunctions } from "./credit/agentFunctions.js";
+import { blankRequest, hydrateRequest, summarize } from "./credit/helpers.js";
 import { initDevPanel, renderDevPanel } from "./services/devPanel.js";
 import { renderMarkdown } from "./services/markdown.js";
 import {
@@ -26,32 +26,23 @@ const client = new AgoClient({
 });
 
 let conversationId = loadConversationId(); // keeps the thread across turns and reloads
-let request = structuredClone(INITIAL_REQUEST);
-// Restore the in-progress request saved with this conversation — known keys only, so a
-// changed schema can't reintroduce removed fields.
-const savedRequest = conversationId ? loadRequest(conversationId) : null;
-if (savedRequest) {
-  for (const k of Object.keys(request)) {
-    if (k in savedRequest) request[k] = savedRequest[k];
-  }
-} else if (conversationId) {
+// Restore the in-progress request saved with this conversation (hydrateRequest keeps known keys only).
+const savedRequest = conversationId ? loadRequest() : null;
+let request = hydrateRequest(savedRequest);
+if (conversationId && !savedRequest) {
   console.warn(
     "Restored conversation without local request state — context starts blank.",
   );
-} else {
+} else if (!conversationId) {
   clearSession();
 }
 const store = {
   get: () => request,
   set: (next) => {
     request = next;
-    saveRequest(conversationId, request);
+    saveRequest(request);
     if (DEV) renderDevPanel();
   },
-  submit: () => ({
-    ok: true,
-    reference: "WD-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
-  }),
 };
 client.register(Object.values(buildCreditFunctions(store)));
 
@@ -108,9 +99,6 @@ client.on("message:chunk", ({ messageId, content }) => {
 client.on("message:complete", (msg) => {
   conversationId = msg.conversationId;
   saveConversationId(conversationId);
-  // First turn: the request was saved before we had a conversation id — rebind it now so the
-  // stored state and the thread share the same id (see loadRequest's match check).
-  saveRequest(conversationId, request);
   const wrap = bubbles.get(msg.id);
   if (wrap) {
     wrap.classList.remove("streaming");
@@ -172,7 +160,7 @@ input.addEventListener("keydown", (e) => {
 newChatBtn?.addEventListener("click", () => {
   conversationId = undefined;
   clearSession();
-  request = structuredClone(INITIAL_REQUEST);
+  request = blankRequest();
   if (DEV) renderDevPanel();
   log.innerHTML = "";
   bubbles.clear();
@@ -199,7 +187,7 @@ async function restoreConversation() {
     // Conversation expired/deleted or network error — start fresh.
     conversationId = undefined;
     clearSession();
-    request = structuredClone(INITIAL_REQUEST);
+    request = blankRequest();
     if (DEV) renderDevPanel();
   }
 }

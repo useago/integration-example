@@ -4,9 +4,6 @@ export const CREDIT_SCHEMA = {
     "Met à jour la demande de regroupement de crédits avec les informations fournies par le " +
     "client. Tous les champs sont optionnels : ne renseigner que ceux mentionnés. Appeler cette " +
     "fonction dès qu'une information est donnée, en remplissant tous les champs connus en un seul appel.",
-  submitRequestDescription:
-    "Valide et envoie la demande de regroupement de crédits. À appeler uniquement quand le " +
-    "client a confirmé qu'il veut envoyer sa demande. Nécessite a minima un email ou un téléphone.",
 
   // Ordered list of fields, following the agent's own question flow
   // `type` drives the JSON-Schema and the initial value
