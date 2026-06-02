@@ -39,6 +39,10 @@ The agent connection lives at the top of `src/main.js`:
 - `baseUrl` — the AGO API host (`https://weendeal.api.useago.com`).
 - `widgetId` — the widget this UI talks to.
 - `defaultAgentId` — optional, targets a specific agent (`credit` here).
+- `debug` — SDK debug logging; tracks **Dev mode** (see below).
+
+`baseUrl` and `widgetId` default to the values above, but you can override them without editing
+source by setting `window.AGO_BASE_URL` / `window.AGO_WIDGET_ID` before `src/main.js` loads.
 
 ## Client-side functions (building a JSON object)
 
@@ -63,7 +67,9 @@ derived from it.
 
 ## Dev mode
 
-This demo ships with the **DEV TOOLS** panel turned on, via `const DEV = true;` near the top of
-`src/main.js`. The panel (top-right) shows the live JSON object as the agent builds it, the
-computed monthly payment / debt ratio, and a log of every `updateRequest` / `submitRequest` call.
-Flip the flag to `false` to hide it.
+The **DEV TOOLS** panel is **off by default**. Turn it on by adding `?dev` to the URL (e.g.
+`http://localhost:5173/?dev`), or by setting `window.AGO_DEV = true` before `src/main.js` loads.
+The same flag also drives the SDK client's `debug` logging.
+
+When on, the panel (top-right) shows the live JSON object as the agent builds it, the computed
+monthly payment / debt ratio, and a log of every `updateRequest` / `submitRequest` call.
