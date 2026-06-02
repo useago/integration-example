@@ -1,7 +1,7 @@
 import { AgoClient } from "@useago/sdk";
 import { buildCreditFunctions } from "./credit/agentFunctions.js";
-import { blankRequest, hydrateRequest, summarize } from "./credit/helpers.js";
-import { initDevPanel, renderDevPanel } from "./services/devPanel.js";
+import { blankRequest, summarize } from "./credit/helpers.js";
+import { initDevPanel } from "./services/devPanel.js";
 import { renderMarkdown } from "./services/markdown.js";
 import {
   clearSession,
@@ -26,34 +26,40 @@ const client = new AgoClient({
 });
 
 let conversationId = loadConversationId(); // keeps the thread across turns and reloads
-// Restore the in-progress request saved with this conversation (hydrateRequest keeps known keys only).
-const savedRequest = conversationId ? loadRequest() : null;
-let request = hydrateRequest(savedRequest);
-if (conversationId && !savedRequest) {
-  console.warn(
-    "Restored conversation without local request state — context starts blank.",
-  );
-} else if (!conversationId) {
-  clearSession();
+
+function createStore(initial) {
+  let state = initial;
+  const subscribers = new Set();
+  return {
+    get: () => state,
+    set: (next) => {
+      state = next;
+      saveRequest(state);
+      subscribers.forEach((fn) => fn(state));
+    },
+    subscribe: (fn) => {
+      subscribers.add(fn);
+      return () => subscribers.delete(fn);
+    },
+  };
 }
-const store = {
-  get: () => request,
-  set: (next) => {
-    request = next;
-    saveRequest(request);
-    if (DEV) renderDevPanel();
-  },
-};
+
+// Restore the in-progress request saved with this conversation.
+const store = createStore({
+  ...blankRequest(),
+  ...(conversationId ? loadRequest() : null),
+});
+if (!conversationId) clearSession();
 client.register(Object.values(buildCreditFunctions(store)));
 
 client.addDynamicContext("credit-request-state", () => ({
   name: "Demande de regroupement de crédits en cours",
   description:
     "État actuel de la demande. Champs vides = null; ne pas redemander ce qui est déjà rempli.",
-  data: summarize(request),
+  data: summarize(store.get()),
 }));
 
-if (DEV) initDevPanel({ getState: store.get, client });
+if (DEV) initDevPanel({ store, client });
 
 // ─── UI ────────────────────────────────────────────────────────────
 const log = document.getElementById("log");
@@ -187,8 +193,7 @@ input.addEventListener("keydown", (e) => {
 newChatBtn?.addEventListener("click", () => {
   conversationId = undefined;
   clearSession();
-  request = blankRequest();
-  if (DEV) renderDevPanel();
+  store.set(blankRequest());
   log.innerHTML = "";
   bubbles.clear();
   rawText.clear();
@@ -219,8 +224,7 @@ async function restoreConversation() {
     // Conversation expired/deleted or network error — start fresh.
     conversationId = undefined;
     clearSession();
-    request = blankRequest();
-    if (DEV) renderDevPanel();
+    store.set(blankRequest());
   }
 }
 

@@ -1,13 +1,9 @@
-// Dev-only inspector for the client-side function flow: shows the JSON object as the agent
-// builds it, plus a live log of function calls. Gated by config.DEV (see main.js) — never
-// shown in production. initDevPanel mounts the panel into an optional `target` (an Element or
-// a CSS selector), defaulting to <body>.
 let stateEl;
 let logEl;
 let getStateFn = () => ({});
 
-// Re-render the JSON object. Called by the store on every state change.
-export function renderDevPanel() {
+// Re-render the JSON object. Wired to the store's subscribe() in initDevPanel.
+function renderState() {
   if (!stateEl) return;
   stateEl.textContent = JSON.stringify(getStateFn(), null, 2);
 }
@@ -39,8 +35,8 @@ function setCollapsed(panel, collapsed) {
   }
 }
 
-export function initDevPanel({ getState, client, target } = {}) {
-  getStateFn = getState;
+export function initDevPanel({ store, client, target } = {}) {
+  getStateFn = store.get;
   injectStyles();
   const host =
     typeof target === "string"
@@ -101,13 +97,11 @@ export function initDevPanel({ getState, client, target } = {}) {
     );
   });
 
-  renderDevPanel();
+  // Re-render the JSON object on every state change, then paint the initial state.
+  store.subscribe(renderState);
+  renderState();
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────────────────────
-// Kept at the bottom so the panel logic above reads uninterrupted. Injected once into <head> on
-// first init (with DEV off it never runs), so the module stays self-contained and portable into
-// the AGO SDK — no separate stylesheet or host-page <link> required.
 const STYLE_ID = "dev-panel-styles";
 
 function injectStyles() {

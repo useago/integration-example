@@ -1,12 +1,10 @@
 export const CREDIT_SCHEMA = {
-  // Sentence the agent reads to know when/how to call updateRequest.
+  // Sentence the agent reads to know when/how to call updateRequest (its only LLM-facing field).
   updateRequestDescription:
-    "Met à jour la demande de rachat / regroupement de crédits avec les informations fournies " +
-    "par le client. Tous les champs sont optionnels : ne renseigner que ceux mentionnés. Appeler " +
-    "cette fonction dès qu'une information est donnée, en remplissant tous les champs connus en un " +
-    "seul appel. Les valeurs sont des codes : utiliser strictement les valeurs autorisées listées.",
+    "Met à jour la demande de rachat / regroupement de crédits. Appeler cette fonction dès qu'une " +
+    "information est donnée, en regroupant dans `patch` tous les champs connus en un seul appel. " +
+    "Les valeurs sont les codes définis dans tes instructions.",
 
-  // Ordered list of fields, mirroring the SERVER-SIDE question flow of the `credit` agent
   fields: [
     // ── 1. Projet de rachat de crédits ──
     {
