@@ -34,6 +34,9 @@ To add or change a starter, edit that array — no other wiring needed. The butt
 reappear on a fresh load and after **Nouvelle discussion**, and disappear once a
 message is sent.
 
+> This mirrors AGO's platform [conversation starters](https://ago.mintlify.app/features/conversation-starters);
+> in this custom SDK UI a starter is simply an initial message (plus optional
+> context), so it's configured here in code rather than in the AGO admin.
 
 ## Dev mode
 
