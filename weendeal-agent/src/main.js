@@ -1,4 +1,4 @@
-import { AgoClient } from "@useago/sdk";
+import { AgoClient, createStore } from "@useago/sdk";
 import { buildCreditFunctions } from "./credit/agentFunctions.js";
 import { blankRequest, summarize } from "./credit/helpers.js";
 import { initDevPanel } from "./services/devPanel.js";
@@ -27,28 +27,13 @@ const client = new AgoClient({
 
 let conversationId = loadConversationId(); // keeps the thread across turns and reloads
 
-function createStore(initial) {
-  let state = initial;
-  const subscribers = new Set();
-  return {
-    get: () => state,
-    set: (next) => {
-      state = next;
-      saveRequest(state);
-      subscribers.forEach((fn) => fn(state));
-    },
-    subscribe: (fn) => {
-      subscribers.add(fn);
-      return () => subscribers.delete(fn);
-    },
-  };
-}
-
 // Restore the in-progress request saved with this conversation.
 const store = createStore({
   ...blankRequest(),
   ...(conversationId ? loadRequest() : null),
 });
+// Persist every change back to localStorage (was baked into the store before
+store.subscribe(saveRequest);
 if (!conversationId) clearSession();
 client.register(Object.values(buildCreditFunctions(store)));
 
