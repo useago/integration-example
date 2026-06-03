@@ -91,6 +91,22 @@ button.ghost:hover { background: var(--accent-soft); }
 }
 .reply-btn:hover { background: var(--accent-soft); border-color: var(--accent); }
 
+/* Conversation starters: welcome screen shown while the chat is empty. */
+.starters { margin: auto 0; display: flex; flex-direction: column; gap: 16px; }
+.starters-intro {
+  margin: 0; text-align: center;
+  font-size: 16px; color: var(--muted);
+}
+.starters-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.starter-btn {
+  font-size: 15px; font-weight: 500;
+  padding: 12px 18px;
+  background: var(--panel); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 14px;
+  cursor: pointer;
+}
+.starter-btn:hover { background: var(--accent-soft); border-color: var(--accent); }
+
 form {
   display: flex;
   gap: 10px;

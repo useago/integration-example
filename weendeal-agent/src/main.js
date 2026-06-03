@@ -72,6 +72,32 @@ const newChatBtn = document.getElementById("new-chat");
 const bubbles = new Map(); // messageId -> .msg element
 const rawText = new Map(); // messageId -> accumulated raw markdown
 
+// Conversation starters shown on the empty chat. Mirrors AGO's starter model:
+// `prompt` is the initial message sent, `additionalPrompt` is extra system
+// context steering the conversation for that path. Clicking one opens the
+// conversation with the matching starter.
+const STARTERS = [
+  {
+    label: "Crédit immobilier",
+    prompt: "Je souhaite regrouper un crédit immobilier.",
+    additionalPrompt:
+      "L'utilisateur démarre depuis le starter « Crédit immobilier » : il veut un regroupement portant sur un crédit immobilier.",
+  },
+  {
+    label: "Crédit immobilier + crédit conso",
+    prompt:
+      "Je souhaite regrouper un crédit immobilier et des crédits à la consommation.",
+    additionalPrompt:
+      "L'utilisateur démarre depuis le starter « Crédit immobilier + crédit conso » : il veut un regroupement mêlant un crédit immobilier et des crédits à la consommation.",
+  },
+  {
+    label: "Crédit conso",
+    prompt: "Je souhaite regrouper des crédits à la consommation.",
+    additionalPrompt:
+      "L'utilisateur démarre depuis le starter « Crédit conso » : il veut un regroupement portant uniquement sur des crédits à la consommation.",
+  },
+];
+
 function addMessage(role, text = "") {
   const wrap = document.createElement("div");
   wrap.className = `msg ${role}`;
@@ -104,9 +130,45 @@ function clearSuggestions() {
   log.querySelectorAll(".suggested-replies").forEach((el) => el.remove());
 }
 
+// Welcome screen with conversation-starter buttons, shown while the chat is empty.
+function renderStarters() {
+  const box = document.createElement("div");
+  box.className = "starters";
+  box.innerHTML = `<p class="starters-intro">Bonjour&nbsp;! Sur quel type de crédit souhaitez-vous être accompagné&nbsp;?</p>`;
+  const list = document.createElement("div");
+  list.className = "starters-list";
+  for (const starter of STARTERS) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "starter-btn";
+    btn.textContent = starter.label;
+    btn.addEventListener("click", () => startFromStarter(starter));
+    list.appendChild(btn);
+  }
+  box.appendChild(list);
+  log.appendChild(box);
+}
+
+function clearStarters() {
+  log.querySelectorAll(".starters").forEach((el) => el.remove());
+}
+
+// Open the conversation from a starter: pin its additional prompt as context
+// for the whole thread, then send its initial message.
+function startFromStarter(starter) {
+  if (starter.additionalPrompt) {
+    client.setContext("conversation-starter", {
+      name: "Conversation starter sélectionné",
+      description: starter.additionalPrompt,
+    });
+  }
+  sendMessage(starter.prompt);
+}
+
 async function sendMessage(content) {
   const trimmed = content.trim();
   if (!trimmed) return;
+  clearStarters();
   clearSuggestions();
   addMessage("user", trimmed);
   input.value = "";
@@ -193,18 +255,23 @@ input.addEventListener("keydown", (e) => {
 newChatBtn?.addEventListener("click", () => {
   conversationId = undefined;
   clearSession();
+  client.removeContext("conversation-starter");
   store.set(blankRequest());
   log.innerHTML = "";
   bubbles.clear();
   rawText.clear();
   statusEl.textContent = "prêt";
   statusEl.classList.remove("live");
+  renderStarters();
   input.focus();
 });
 
 // ─── Restore the previous conversation on load ──────────────────────
 async function restoreConversation() {
-  if (!conversationId) return;
+  if (!conversationId) {
+    renderStarters();
+    return;
+  }
   try {
     const conv = await client.getConversation(conversationId);
     const messages = conv?.messages ?? [];
@@ -225,6 +292,8 @@ async function restoreConversation() {
     conversationId = undefined;
     clearSession();
     store.set(blankRequest());
+    log.innerHTML = "";
+    renderStarters();
   }
 }
 
