@@ -21,7 +21,7 @@ const client = new AgoClient({
   widgetId:
     window.AGO_WIDGET_ID ??
     "ago_widget__U_0uoreN3HwElvncdL8v2fPLdsD9xAZbc1KIFOry2E",
-  defaultAgentId: "credit",
+  defaultAgentId: "credit2",
   debug: DEV,
 });
 
