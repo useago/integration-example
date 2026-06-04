@@ -21,20 +21,28 @@ export function buildCreditFunctions(store) {
     handler: async (args = {}) => {
       const patch = args.patch ?? {};
 
-      const unknown = Object.keys(patch).filter((k) => !knownKeys.has(k));
+      // Whitelist: the agent may only write fields defined in the schema.
+      // conversationId (app-managed) and any stray/hallucinated keys are dropped,
+      // so they can never reach the store or localStorage.
+      const safePatch = {};
+      const unknown = [];
+      for (const [key, value] of Object.entries(patch)) {
+        if (knownKeys.has(key)) safePatch[key] = value;
+        else unknown.push(key);
+      }
       if (unknown.length) {
         console.warn(
-          "[schema drift] updateRequest received unknown field(s) — check schema.js against the credit agent prompt:",
+          "[schema drift] updateRequest dropped unknown field(s) — check schema.js against the credit agent prompt:",
           unknown,
         );
       }
-      store.set({ ...store.get(), ...patch });
+
+      store.set({ ...store.get(), ...safePatch });
+
       // Confirm only what changed — the dynamic context already carries the full state.
       const summary = summarize(store.get());
       const updated = {};
-      for (const k of Object.keys(patch)) {
-        if (knownKeys.has(k)) updated[k] = summary[k];
-      }
+      for (const key of Object.keys(safePatch)) updated[key] = summary[key];
       return { ok: true, updated };
     },
   });
