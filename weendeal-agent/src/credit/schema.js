@@ -1,481 +1,247 @@
-// Field definitions for the credit-consolidation form. `creditFormSchema`
-// (below) turns these into the JSON schema createFormCollector consumes.
+// Form schema for the credit-consolidation flow, already in the JSON-schema
+// shape createFormCollector consumes — main.js passes it straight through, no
+// transform. Each enum field carries its code legend (e.g. 1=Propriétaire)
+// inline in the description so the agent knows what every value means.
+// required is left empty: fields are filled opportunistically as the
+// conversation surfaces them, never gated.
 export const CREDIT_SCHEMA = {
-  fields: [
+  type: "object",
+  properties: {
+
     // ── 1. Projet de rachat de crédits ──
-    {
-      key: "locataire",
+    locataire: {
       type: "string",
-      label: "Statut propriétaire",
-      description: "Le client est-il propriétaire de son logement",
-      enum: [
-        { value: "1", label: "Propriétaire" },
-        { value: "2", label: "Pas propriétaire" },
-      ],
+      description: "Le client est-il propriétaire de son logement. Valeurs : 1=Propriétaire, 2=Pas propriétaire",
+      enum: ["1","2"],
     },
-    {
-      key: "detail_projet",
+    detail_projet: {
       type: "string",
-      label: "Détail du projet",
-      description: "Type de démarche souhaitée",
-      enum: [
-        { value: "1", label: "Renégocier uniquement le prêt immobilier" },
-        { value: "2", label: "Regrouper prêts conso et immo" },
-        { value: "3", label: "Regrouper uniquement les prêts conso" },
-      ],
+      description: "Type de démarche souhaitée. Valeurs : 1=Renégocier uniquement le prêt immobilier, 2=Regrouper prêts conso et immo, 3=Regrouper uniquement les prêts conso",
+      enum: ["1","2","3"],
     },
-    {
-      key: "projet_seul",
+    projet_seul: {
       type: "string",
-      label: "Seul ou co-emprunteur",
-      description: "Démarche faite seul ou avec un co-emprunteur",
-      enum: [
-        { value: "1", label: "Seul" },
-        { value: "2", label: "Avec un co-emprunteur" },
-      ],
+      description: "Démarche faite seul ou avec un co-emprunteur. Valeurs : 1=Seul, 2=Avec un co-emprunteur",
+      enum: ["1","2"],
     },
 
     // ── 2. Situation familiale ──
-    {
-      key: "situation_famille",
+    situation_famille: {
       type: "string",
-      label: "Situation familiale",
-      description: "Situation familiale du client",
-      enum: [
-        { value: "1", label: "Célibataire" },
-        { value: "2", label: "Marié(e) / Pacsé(e)" },
-        { value: "3", label: "Concubin(e)" },
-        { value: "4", label: "Séparé(e)" },
-        { value: "5", label: "Divorcé(e)" },
-        { value: "6", label: "Veuf(ve)" },
-      ],
+      description: "Situation familiale du client. Valeurs : 1=Célibataire, 2=Marié(e) / Pacsé(e), 3=Concubin(e), 4=Séparé(e), 5=Divorcé(e), 6=Veuf(ve)",
+      enum: ["1","2","3","4","5","6"],
     },
-    {
-      key: "nbre_enfant",
+    nbre_enfant: {
       type: "number",
-      label: "Enfants à charge",
       description: "Nombre d'enfants à charge (de 0 à 9)",
     },
 
     // ── 3. Crédits à la consommation ──
-    {
-      key: "nb_credit_conso",
+    nb_credit_conso: {
       type: "number",
-      label: "Nombre de crédits conso",
-      description:
-        "Nombre de crédits à la consommation en cours (de 1 à 12 ; 13 = plus de 12)",
+      description: "Nombre de crédits à la consommation en cours (de 1 à 12 ; 13 = plus de 12)",
     },
-    {
-      key: "montant_remboursements_mensuel_conso",
+    montant_remboursements_mensuel_conso: {
       type: "number",
-      label: "Mensualités conso",
-      description:
-        "Montant total des remboursements mensuels des crédits conso, en euros par mois (si au moins un crédit conso)",
+      description: "Montant total des remboursements mensuels des crédits conso, en euros par mois (si au moins un crédit conso)",
     },
-    {
-      key: "capitaux_restant_dus_conso",
+    capitaux_restant_dus_conso: {
       type: "number",
-      label: "Capital restant dû conso",
-      description:
-        "Estimation du capital restant dû (CRD) sur les crédits conso, en euros (si au moins un crédit conso)",
+      description: "Estimation du capital restant dû (CRD) sur les crédits conso, en euros (si au moins un crédit conso)",
     },
 
     // ── 4. Crédits immobiliers ──
-    {
-      key: "nb_credit_immo",
+    nb_credit_immo: {
       type: "number",
-      label: "Nombre de crédits immo",
-      description:
-        "Nombre de crédits immobiliers en cours (de 0 à 12 ; 13 = plus de 12)",
+      description: "Nombre de crédits immobiliers en cours (de 0 à 12 ; 13 = plus de 12)",
     },
-    {
-      key: "montant_remboursements_mensuel_immo",
+    montant_remboursements_mensuel_immo: {
       type: "number",
-      label: "Mensualités immo",
-      description:
-        "Montant total des remboursements mensuels des crédits immobiliers, en euros par mois (si au moins un crédit immo)",
+      description: "Montant total des remboursements mensuels des crédits immobiliers, en euros par mois (si au moins un crédit immo)",
     },
-    {
-      key: "capitaux_restant_dus_immo",
+    capitaux_restant_dus_immo: {
       type: "number",
-      label: "Capital restant dû immo",
-      description:
-        "Estimation du capital restant dû (CRD) sur les crédits immobiliers, en euros (si au moins un crédit immo)",
+      description: "Estimation du capital restant dû (CRD) sur les crédits immobiliers, en euros (si au moins un crédit immo)",
     },
-    {
-      key: "optin_assurance_pret",
+    optin_assurance_pret: {
       type: "string",
-      label: "Évaluation assurance de prêt",
-      description:
-        "Le client souhaite une évaluation gratuite de son assurance de prêt (proposé uniquement si 1 ou 2 crédits immo)",
-      enum: [
-        { value: "Y", label: "Oui" },
-        { value: "N", label: "Non" },
-      ],
+      description: "Le client souhaite une évaluation gratuite de son assurance de prêt (proposé uniquement si 1 ou 2 crédits immo). Valeurs : Y=Oui, N=Non",
+      enum: ["Y","N"],
     },
 
     // ── 5. Besoin de trésorerie ──
-    {
-      key: "tresorie",
+    tresorie: {
       type: "number",
-      label: "Trésorerie souhaitée",
-      description:
-        "Trésorerie supplémentaire souhaitée, en euros (vide si aucun besoin)",
+      description: "Trésorerie supplémentaire souhaitée, en euros (vide si aucun besoin)",
     },
 
     // ── 6. Revenus ──
-    {
-      key: "salaire",
+    salaire: {
       type: "number",
-      label: "Revenus mensuels",
-      description:
-        "Revenus nets mensuels hors primes du client, en euros par mois",
+      description: "Revenus nets mensuels hors primes du client, en euros par mois",
     },
-    {
-      key: "prime",
+    prime: {
       type: "number",
-      label: "Primes annuelles",
       description: "Primes annuelles du client, en euros par an",
     },
-    {
-      key: "cj_salaire",
+    cj_salaire: {
       type: "number",
-      label: "Co — Revenus mensuels",
-      description:
-        "Revenus nets mensuels du co-emprunteur, en euros par mois (si co-emprunteur)",
+      description: "Revenus nets mensuels du co-emprunteur, en euros par mois (si co-emprunteur)",
     },
-    {
-      key: "cj_prime",
+    cj_prime: {
       type: "number",
-      label: "Co — Primes annuelles",
-      description:
-        "Primes annuelles du co-emprunteur, en euros par an (si co-emprunteur)",
+      description: "Primes annuelles du co-emprunteur, en euros par an (si co-emprunteur)",
     },
-    {
-      key: "autres_revenus",
+    autres_revenus: {
       type: "number",
-      label: "Autres revenus",
-      description:
-        "Autres revenus mensuels du client (pensions, allocations, loyers perçus…), en euros par mois",
+      description: "Autres revenus mensuels du client (pensions, allocations, loyers perçus…), en euros par mois",
     },
-    {
-      key: "cj_autres_revenus",
+    cj_autres_revenus: {
       type: "number",
-      label: "Co — Autres revenus",
-      description:
-        "Autres revenus mensuels du co-emprunteur, en euros par mois (si co-emprunteur)",
+      description: "Autres revenus mensuels du co-emprunteur, en euros par mois (si co-emprunteur)",
     },
 
-    // ── 7. Charges mensuelles (si locataire = 2, non propriétaire) ──
-    {
-      key: "type_locataire",
+    // ── 7. Charges mensuelles (si non propriétaire) ──
+    type_locataire: {
       type: "string",
-      label: "Type d'occupation",
-      description:
-        "Statut d'occupation du logement (si le client n'est pas propriétaire)",
-      enum: [
-        { value: "1", label: "Locataire" },
-        { value: "2", label: "Logé à titre gratuit" },
-      ],
+      description: "Statut d'occupation du logement (si le client n'est pas propriétaire). Valeurs : 1=Locataire, 2=Logé à titre gratuit",
+      enum: ["1","2"],
     },
-    {
-      key: "montant_votre_loyer",
+    montant_votre_loyer: {
       type: "number",
-      label: "Loyer mensuel",
       description: "Montant du loyer mensuel, en euros par mois (si locataire)",
     },
-    {
-      key: "heberge_gratuit",
+    heberge_gratuit: {
       type: "string",
-      label: "Hébergé par",
-      description: "Par qui le client est hébergé (si logé à titre gratuit)",
-      enum: [
-        { value: "1", label: "Famille" },
-        { value: "2", label: "Tiers" },
-        { value: "3", label: "Logement de fonction" },
-      ],
+      description: "Par qui le client est hébergé (si logé à titre gratuit). Valeurs : 1=Famille, 2=Tiers, 3=Logement de fonction",
+      enum: ["1","2","3"],
     },
 
     // ── 8. Informations complémentaires ──
-    {
-      key: "FICP",
+    FICP: {
       type: "string",
-      label: "Fiché FICP",
-      description: "Le client est-il fiché FICP (fiché à la Banque de France)",
-      enum: [
-        { value: "1", label: "Oui" },
-        { value: "2", label: "Non" },
-      ],
+      description: "Le client est-il fiché FICP (fiché à la Banque de France). Valeurs : 1=Oui, 2=Non",
+      enum: ["1","2"],
     },
-    {
-      key: "deja_restructure",
+    deja_restructure: {
       type: "string",
-      label: "Déjà restructuré",
-      description:
-        "Le client a-t-il déjà effectué une restructuration de dettes",
-      enum: [
-        { value: "1", label: "Oui" },
-        { value: "2", label: "Non" },
-      ],
+      description: "Le client a-t-il déjà effectué une restructuration de dettes. Valeurs : 1=Oui, 2=Non",
+      enum: ["1","2"],
     },
 
     // ── 9. Informations personnelles emprunteur ──
-    {
-      key: "dob",
+    dob: {
       type: "string",
-      label: "Date de naissance",
       description: "Date de naissance du client (format YYYY-MM-DD)",
     },
-    {
-      key: "nationalite",
+    nationalite: {
       type: "string",
-      label: "Nationalité",
-      description: "Nationalité du client",
-      enum: [
-        { value: "1", label: "France" },
-        { value: "2", label: "Union européenne" },
-        { value: "3", label: "Autres" },
-      ],
+      description: "Nationalité du client. Valeurs : 1=France, 2=Union européenne, 3=Autres",
+      enum: ["1","2","3"],
     },
-    {
-      key: "profession",
+    profession: {
       type: "string",
-      label: "Profession",
-      description: "Profession du client",
-      enum: [
-        { value: "1", label: "Employé" },
-        { value: "2", label: "Cadre" },
-        { value: "3", label: "Commerçant" },
-        { value: "4", label: "Fonctionnaire" },
-        { value: "5", label: "Enseignant" },
-        { value: "6", label: "Agriculteur" },
-        { value: "7", label: "Artisan" },
-        { value: "8", label: "Chef d'entreprise" },
-        { value: "9", label: "Profession libérale" },
-        { value: "10", label: "VRP" },
-        { value: "11", label: "Étudiant" },
-        { value: "12", label: "Retraité" },
-        { value: "13", label: "Sans profession" },
-        { value: "14", label: "Recherche d'emploi" },
-        { value: "15", label: "Autre" },
-      ],
+      description: "Profession du client. Valeurs : 1=Employé, 2=Cadre, 3=Commerçant, 4=Fonctionnaire, 5=Enseignant, 6=Agriculteur, 7=Artisan, 8=Chef d'entreprise, 9=Profession libérale, 10=VRP, 11=Étudiant, 12=Retraité, 13=Sans profession, 14=Recherche d'emploi, 15=Autre",
+      enum: ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"],
     },
-    {
-      key: "contrat_travail",
+    contrat_travail: {
       type: "string",
-      label: "Type de contrat",
-      description: "Type de contrat de travail du client",
-      enum: [
-        { value: "1", label: "CDI" },
-        { value: "2", label: "CDD" },
-        { value: "3", label: "Intérimaire" },
-        { value: "4", label: "Saisonnier" },
-        { value: "5", label: "Travailleur Non Salarié" },
-        { value: "6", label: "CDI (essai)" },
-        { value: "7", label: "Secteur Public" },
-        { value: "8", label: "Intermittent du spectacle" },
-        { value: "9", label: "Autre / Retraité(e)" },
-      ],
+      description: "Type de contrat de travail du client. Valeurs : 1=CDI, 2=CDD, 3=Intérimaire, 4=Saisonnier, 5=Travailleur Non Salarié, 6=CDI (essai), 7=Secteur Public, 8=Intermittent du spectacle, 9=Autre / Retraité(e)",
+      enum: ["1","2","3","4","5","6","7","8","9"],
     },
-    {
-      key: "anciennete",
+    anciennete: {
       type: "number",
-      label: "Ancienneté",
       description: "Ancienneté chez l'employeur actuel, en années pleines",
     },
 
-    // ── 10. Informations personnelles co-emprunteur (si co-emprunteur) ──
-    {
-      key: "cj_civilite",
+    // ── 10. Informations personnelles co-emprunteur ──
+    cj_civilite: {
       type: "string",
-      label: "Co — Civilité",
-      description: "Civilité du co-emprunteur",
-      enum: [
-        { value: "1", label: "Mr" },
-        { value: "2", label: "Mlle" },
-        { value: "3", label: "Mme" },
-      ],
+      description: "Civilité du co-emprunteur. Valeurs : 1=Mr, 2=Mlle, 3=Mme",
+      enum: ["1","2","3"],
     },
-    {
-      key: "cj_nom",
+    cj_nom: {
       type: "string",
-      label: "Co — Nom",
       description: "Nom de famille du co-emprunteur",
     },
-    {
-      key: "cj_prenom",
+    cj_prenom: {
       type: "string",
-      label: "Co — Prénom",
       description: "Prénom du co-emprunteur",
     },
-    {
-      key: "cj_dob",
+    cj_dob: {
       type: "string",
-      label: "Co — Date de naissance",
       description: "Date de naissance du co-emprunteur (format YYYY-MM-DD)",
     },
-    {
-      key: "cj_profession",
+    cj_profession: {
       type: "string",
-      label: "Co — Profession",
-      description: "Profession du co-emprunteur (mêmes codes que profession)",
-      enum: [
-        { value: "1", label: "Employé" },
-        { value: "2", label: "Cadre" },
-        { value: "3", label: "Commerçant" },
-        { value: "4", label: "Fonctionnaire" },
-        { value: "5", label: "Enseignant" },
-        { value: "6", label: "Agriculteur" },
-        { value: "7", label: "Artisan" },
-        { value: "8", label: "Chef d'entreprise" },
-        { value: "9", label: "Profession libérale" },
-        { value: "10", label: "VRP" },
-        { value: "11", label: "Étudiant" },
-        { value: "12", label: "Retraité" },
-        { value: "13", label: "Sans profession" },
-        { value: "14", label: "Recherche d'emploi" },
-        { value: "15", label: "Autre" },
-      ],
+      description: "Profession du co-emprunteur (mêmes codes que profession). Valeurs : 1=Employé, 2=Cadre, 3=Commerçant, 4=Fonctionnaire, 5=Enseignant, 6=Agriculteur, 7=Artisan, 8=Chef d'entreprise, 9=Profession libérale, 10=VRP, 11=Étudiant, 12=Retraité, 13=Sans profession, 14=Recherche d'emploi, 15=Autre",
+      enum: ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"],
     },
-    {
-      key: "cj_contrat_travail",
+    cj_contrat_travail: {
       type: "string",
-      label: "Co — Type de contrat",
-      description:
-        "Type de contrat de travail du co-emprunteur (mêmes codes que contrat_travail)",
-      enum: [
-        { value: "1", label: "CDI" },
-        { value: "2", label: "CDD" },
-        { value: "3", label: "Intérimaire" },
-        { value: "4", label: "Saisonnier" },
-        { value: "5", label: "Travailleur Non Salarié" },
-        { value: "6", label: "CDI (essai)" },
-        { value: "7", label: "Secteur Public" },
-        { value: "8", label: "Intermittent du spectacle" },
-        { value: "9", label: "Autre / Retraité(e)" },
-      ],
+      description: "Type de contrat de travail du co-emprunteur (mêmes codes que contrat_travail). Valeurs : 1=CDI, 2=CDD, 3=Intérimaire, 4=Saisonnier, 5=Travailleur Non Salarié, 6=CDI (essai), 7=Secteur Public, 8=Intermittent du spectacle, 9=Autre / Retraité(e)",
+      enum: ["1","2","3","4","5","6","7","8","9"],
     },
-    {
-      key: "cj_anciennete",
+    cj_anciennete: {
       type: "number",
-      label: "Co — Ancienneté",
-      description:
-        "Ancienneté du co-emprunteur chez son employeur actuel, en années",
+      description: "Ancienneté du co-emprunteur chez son employeur actuel, en années",
     },
 
     // ── 11. Coordonnées personnelles ──
-    {
-      key: "civilite",
+    civilite: {
       type: "string",
-      label: "Civilité",
-      description: "Civilité du client",
-      enum: [
-        { value: "1", label: "Mr" },
-        { value: "2", label: "Mlle" },
-        { value: "3", label: "Mme" },
-      ],
+      description: "Civilité du client. Valeurs : 1=Mr, 2=Mlle, 3=Mme",
+      enum: ["1","2","3"],
     },
-    {
-      key: "nom",
+    nom: {
       type: "string",
-      label: "Nom",
       description: "Nom de famille du client (max 35 caractères)",
     },
-    {
-      key: "prenom",
+    prenom: {
       type: "string",
-      label: "Prénom",
       description: "Prénom du client (max 35 caractères)",
     },
-    {
-      key: "adresse",
+    adresse: {
       type: "string",
-      label: "Adresse",
       description: "Adresse postale du client (max 40 caractères)",
     },
-    {
-      key: "adresse1",
+    adresse1: {
       type: "string",
-      label: "Complément d'adresse",
       description: "Complément d'adresse (max 40 caractères)",
     },
-    {
-      key: "cp",
+    cp: {
       type: "string",
-      label: "Code postal",
       description: "Code postal (5 chiffres)",
     },
-    {
-      key: "ville",
+    ville: {
       type: "string",
-      label: "Ville",
       description: "Ville de résidence du client (max 40 caractères)",
     },
-    {
-      key: "pays",
+    pays: {
       type: "string",
-      label: "Pays",
       description: "Pays de résidence du client, code ISO (ex: FR, BE, GP, MQ)",
     },
-    {
-      key: "tel_mobile",
+    tel_mobile: {
       type: "string",
-      label: "Téléphone mobile",
       description: "Numéro de téléphone mobile du client (10 chiffres)",
     },
-    {
-      key: "tel_domicile",
+    tel_domicile: {
       type: "string",
-      label: "Téléphone fixe",
       description: "Numéro de téléphone fixe / domicile (10 chiffres)",
     },
-    {
-      key: "tel_bureau",
+    tel_bureau: {
       type: "string",
-      label: "Téléphone bureau",
       description: "Numéro de téléphone du bureau (10 chiffres)",
     },
-    {
-      key: "periode_appel",
+    periode_appel: {
       type: "string",
-      label: "Période de rappel",
-      description: "Période préférée pour être rappelé",
-      enum: [
-        { value: "1", label: "Indifférent" },
-        { value: "2", label: "Matin" },
-        { value: "3", label: "Après-midi" },
-        { value: "4", label: "Soirée" },
-      ],
+      description: "Période préférée pour être rappelé. Valeurs : 1=Indifférent, 2=Matin, 3=Après-midi, 4=Soirée",
+      enum: ["1","2","3","4"],
     },
-    {
-      key: "email",
+    email: {
       type: "string",
-      label: "Email",
       description: "Adresse email du client (email valide, max 40 caractères)",
     },
-  ],
-};
-
-// JSON-schema view of the fields above — the shape `createFormCollector` wants
-// (an object whose `properties` are the form fields). Each enum's codes are
-// folded into the description so the agent knows what every value means.
-// `required` is left empty: fields are filled opportunistically as the
-// conversation surfaces them, never gated.
-export const creditFormSchema = {
-  type: "object",
-  properties: Object.fromEntries(
-    CREDIT_SCHEMA.fields.map((f) => {
-      const prop = {
-        type: f.type,
-        description: f.enum
-          ? `${f.description}. Valeurs : ${f.enum
-              .map((o) => `${o.value}=${o.label}`)
-              .join(", ")}`
-          : f.description,
-      };
-      if (f.enum) prop.enum = f.enum.map((o) => o.value);
-      return [f.key, prop];
-    }),
-  ),
+  },
   required: [],
 };
