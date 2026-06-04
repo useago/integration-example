@@ -1,9 +1,15 @@
 import { CREDIT_SCHEMA } from "./schema.js";
 
 export function blankRequest() {
-  return Object.fromEntries(
-    CREDIT_SCHEMA.fields.map((f) => [f.key, f.type === "string" && !f.enum ? "" : null]),
-  );
+  return {
+    conversationId: null,
+    ...Object.fromEntries(
+      CREDIT_SCHEMA.fields.map((f) => [
+        f.key,
+        f.type === "string" && !f.enum ? "" : null,
+      ]),
+    ),
+  };
 }
 
 function labelFor(key, value) {

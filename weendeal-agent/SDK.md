@@ -40,7 +40,7 @@ Without a bundler, resolve the SDK from a CDN through an import map:
 
 ```html
 <script type="importmap">
-  { "imports": { "@useago/sdk": "https://esm.sh/@useago/sdk@0.3.0" } }
+  { "imports": { "@useago/sdk": "https://esm.sh/@useago/sdk@0.3.2" } }
 </script>
 ```
 
@@ -235,7 +235,8 @@ client.on("function:result", ({ result, error }) => {
 });
 ```
 
-> Example: [src/services/devPanel.js](src/services/devPanel.js).
+> The SDK ships this as a ready-made overlay: `import { initDevPanel } from "@useago/sdk/devtools"`
+> then `if (DEV) initDevPanel({ store, client })`.
 
 ## Context
 
@@ -403,7 +404,7 @@ All importable from `@useago/sdk`:
 | `createMessageStream(client, content, options?)`                                                    | Sends a message and yields events as an async generator (`for await`).     |
 | `SSEHandler`, `isStreamNetworkError`                                                                | Low-level SSE plumbing.                                                    |
 | pre-built functions (`showToast`, `openUrl`, …) + `withHandler`                                     | See [Pre-built client functions](#pre-built-client-functions).             |
-| `createStore(initial)`                                                                              | Tiny observable store (`get`/`set`/`subscribe`) for shared UI/request state. |
+| `createStore(initial, persist?)`                                                                    | Tiny observable store (`get`/`set`/`subscribe`); pass `{ key }` to persist to localStorage. |
 | `createMockClient`                                                                                  | In-memory client for tests (`@useago/sdk/testing`).                        |
 | `AgoError`, `AgoApiError`, `AgoNetworkError`, `AgoStreamError`, `AgoFunctionError`                  | Error subclasses the SDK throws — catch to distinguish failure kinds.      |
 | `FunctionRegistry`, `ClientContextRegistry`, `EventEmitter`, `logger`                               | Internals for advanced usage.                                              |

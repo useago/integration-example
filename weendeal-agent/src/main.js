@@ -1,19 +1,12 @@
 import { AgoClient, createStore } from "@useago/sdk";
+import { initDevPanel } from "@useago/sdk/devtools";
 import { buildCreditFunctions } from "./credit/agentFunctions.js";
 import { blankRequest, summarize } from "./credit/helpers.js";
-import { initDevPanel } from "./services/devPanel.js";
 import { renderMarkdown } from "./services/markdown.js";
-import {
-  clearSession,
-  loadConversationId,
-  loadRequest,
-  saveConversationId,
-  saveRequest,
-} from "./services/sessionStore.js";
 
-// ─── Dev flag ─────────────────────────────────────────────────────
-
-const DEV = window.AGO_DEV ?? new URLSearchParams(location.search).has("dev");
+// Don't activate in production
+const DEV = true;
+const agentId = "credit2";
 
 // ─── Configuration ────────────────────────────────────────────────
 const client = new AgoClient({
@@ -21,20 +14,12 @@ const client = new AgoClient({
   widgetId:
     window.AGO_WIDGET_ID ??
     "ago_widget__U_0uoreN3HwElvncdL8v2fPLdsD9xAZbc1KIFOry2E",
-  defaultAgentId: "credit2",
+  defaultAgentId: agentId,
   debug: DEV,
 });
 
-let conversationId = loadConversationId(); // keeps the thread across turns and reloads
+const store = createStore(blankRequest(), { key: agentId });
 
-// Restore the in-progress request saved with this conversation.
-const store = createStore({
-  ...blankRequest(),
-  ...(conversationId ? loadRequest() : null),
-});
-// Persist every change back to localStorage (was baked into the store before
-store.subscribe(saveRequest);
-if (!conversationId) clearSession();
 client.register(Object.values(buildCreditFunctions(store)));
 
 client.addDynamicContext("credit-request-state", () => ({
@@ -97,7 +82,10 @@ async function sendMessage(content) {
   input.value = "";
   sendBtn.disabled = true;
   try {
-    await client.sendMessage(trimmed, { conversationId });
+    await client.sendMessage(trimmed, {
+      // null (no conversation yet) → undefined so it's omitted from the request body.
+      conversationId: store.get().conversationId ?? undefined,
+    });
   } catch (err) {
     addMessage("assistant", "⚠️ " + (err?.message ?? err));
     sendBtn.disabled = false;
@@ -124,8 +112,8 @@ client.on("message:chunk", ({ messageId, content }) => {
 });
 
 client.on("message:complete", (msg) => {
-  conversationId = msg.conversationId;
-  saveConversationId(conversationId);
+  // Persist the conversation id onto the request so the thread survives reloads.
+  store.set({ ...store.get(), conversationId: msg.conversationId });
   const wrap = bubbles.get(msg.id);
   if (wrap) {
     wrap.classList.remove("streaming");
@@ -176,8 +164,7 @@ input.addEventListener("keydown", (e) => {
 
 // ─── New conversation reset ─────────────────────────────────────────
 newChatBtn?.addEventListener("click", () => {
-  conversationId = undefined;
-  clearSession();
+  // Resets both the request fields and conversationId; the store re-persists it.
   store.set(blankRequest());
   log.innerHTML = "";
   bubbles.clear();
@@ -189,6 +176,7 @@ newChatBtn?.addEventListener("click", () => {
 
 // ─── Restore the previous conversation on load ──────────────────────
 async function restoreConversation() {
+  const conversationId = store.get().conversationId;
   if (!conversationId) return;
   try {
     const conv = await client.getConversation(conversationId);
@@ -207,9 +195,7 @@ async function restoreConversation() {
     log.scrollTop = log.scrollHeight;
   } catch {
     // Conversation expired/deleted or network error — start fresh.
-    conversationId = undefined;
-    clearSession();
-    store.set(blankRequest());
+    store.clear();
   }
 }
 
