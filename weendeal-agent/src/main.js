@@ -5,7 +5,7 @@ import {
   createMessageStream,
 } from "@useago/sdk";
 import { initDevPanel } from "@useago/sdk/devtools";
-import { creditFormSchema } from "./credit/schema.js";
+import { CREDIT_SCHEMA } from "./credit/schema.js";
 import { renderMarkdown } from "./services/markdown.js";
 
 // Don't activate in production
@@ -38,7 +38,7 @@ const creditForm = createFormCollector({
   name: "credit",
   description:
     "Demande de rachat / regroupement de crédits. Renseigne les champs au fur et à mesure ; ne redemande pas un champ déjà rempli.",
-  schema: creditFormSchema,
+  schema: CREDIT_SCHEMA,
   initialValues: session.get().values,
 });
 creditForm.install(client);
@@ -72,23 +72,6 @@ function addMessage(role, text = "") {
   log.appendChild(wrap);
   log.scrollTop = log.scrollHeight;
   return wrap;
-}
-
-// Render the agent's cited sources under an assistant bubble.
-function renderSources(wrap, sources) {
-  if (!sources?.length) return;
-  const s = document.createElement("div");
-  s.className = "sources";
-  s.innerHTML =
-    "Sources : " +
-    sources
-      .map((src) =>
-        src.url
-          ? `<a href="${src.url}" target="_blank">${src.title}</a>`
-          : src.title,
-      )
-      .join(" · ");
-  wrap.appendChild(s);
 }
 
 // Render follow-up reply pills under an assistant bubble; clicking one sends it.
@@ -149,7 +132,6 @@ async function sendMessage(content) {
         session.set({ ...session.get(), conversationId: msg.conversationId });
         wrap.classList.remove("streaming");
         wrap.querySelector(".bubble").innerHTML = renderMarkdown(msg.content);
-        renderSources(wrap, msg.sources);
         renderSuggestions(wrap, msg.followUpReplies);
         handled = true;
       } else if (event.type === "error") {
