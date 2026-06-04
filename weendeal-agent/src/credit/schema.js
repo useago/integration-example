@@ -1,10 +1,6 @@
+// Field definitions for the credit-consolidation form. `creditFormSchema`
+// (below) turns these into the JSON schema createFormCollector consumes.
 export const CREDIT_SCHEMA = {
-  // Sentence the agent reads to know when/how to call updateRequest (its only LLM-facing field).
-  updateRequestDescription:
-    "Met à jour la demande de rachat / regroupement de crédits. Appeler cette fonction dès qu'une " +
-    "information est donnée, en regroupant dans `patch` tous les champs connus en un seul appel. " +
-    "Les valeurs sont les codes définis dans tes instructions.",
-
   fields: [
     // ── 1. Projet de rachat de crédits ──
     {
@@ -458,4 +454,28 @@ export const CREDIT_SCHEMA = {
       description: "Adresse email du client (email valide, max 40 caractères)",
     },
   ],
+};
+
+// JSON-schema view of the fields above — the shape `createFormCollector` wants
+// (an object whose `properties` are the form fields). Each enum's codes are
+// folded into the description so the agent knows what every value means.
+// `required` is left empty: fields are filled opportunistically as the
+// conversation surfaces them, never gated.
+export const creditFormSchema = {
+  type: "object",
+  properties: Object.fromEntries(
+    CREDIT_SCHEMA.fields.map((f) => {
+      const prop = {
+        type: f.type,
+        description: f.enum
+          ? `${f.description}. Valeurs : ${f.enum
+              .map((o) => `${o.value}=${o.label}`)
+              .join(", ")}`
+          : f.description,
+      };
+      if (f.enum) prop.enum = f.enum.map((o) => o.value);
+      return [f.key, prop];
+    }),
+  ),
+  required: [],
 };
