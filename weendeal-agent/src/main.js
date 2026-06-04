@@ -1,7 +1,11 @@
-import { AgoClient, createStore } from "@useago/sdk";
+import {
+  AgoClient,
+  createStore,
+  createFormCollector,
+  createMessageStream,
+} from "@useago/sdk";
 import { initDevPanel } from "@useago/sdk/devtools";
-import { buildCreditFunctions } from "./credit/agentFunctions.js";
-import { blankRequest, summarize } from "./credit/helpers.js";
+import { creditFormSchema } from "./credit/schema.js";
 import { renderMarkdown } from "./services/markdown.js";
 
 // Don't activate in production
@@ -18,18 +22,33 @@ const client = new AgoClient({
   debug: DEV,
 });
 
-const store = createStore(blankRequest(), { key: agentId });
+// Persisted session: the thread id + the fields gathered so far, so a reload
+// restores both. (The collector's own store is in-memory, so we mirror its
+// values here for persistence.)
+const session = createStore(
+  { conversationId: null, values: {} },
+  { key: agentId },
+);
 
-client.register(Object.values(buildCreditFunctions(store)));
-
-client.addDynamicContext("credit-request-state", () => ({
-  name: "Demande de regroupement de crédits en cours",
+// One call wires the whole conversational form: a store, an `update_credit`
+// function the agent calls to fill fields, and a dynamic context that tells it
+// which fields are still missing. Replaces the hand-rolled updateRequest
+// function, the summarize() context, and the manual register/addDynamicContext.
+const creditForm = createFormCollector({
+  name: "credit",
   description:
-    "État actuel de la demande. Champs vides = null; ne pas redemander ce qui est déjà rempli.",
-  data: summarize(store.get()),
-}));
+    "Demande de rachat / regroupement de crédits. Renseigne les champs au fur et à mesure ; ne redemande pas un champ déjà rempli.",
+  schema: creditFormSchema,
+  initialValues: session.get().values,
+});
+creditForm.install(client);
 
-if (DEV) initDevPanel({ store, client });
+// Mirror collected fields into the persisted session so they survive reloads.
+creditForm.store.subscribe((s) =>
+  session.set({ ...session.get(), values: s.values }),
+);
+
+if (DEV) initDevPanel({ store: creditForm.store, client });
 
 // ─── UI ────────────────────────────────────────────────────────────
 const log = document.getElementById("log");
@@ -39,8 +58,10 @@ const sendBtn = document.getElementById("send");
 const statusEl = document.getElementById("status");
 const newChatBtn = document.getElementById("new-chat");
 
-const bubbles = new Map(); // messageId -> .msg element
-const rawText = new Map(); // messageId -> accumulated raw markdown
+function setStatus(text, live) {
+  statusEl.textContent = text;
+  statusEl.classList.toggle("live", live);
+}
 
 function addMessage(role, text = "") {
   const wrap = document.createElement("div");
@@ -51,6 +72,23 @@ function addMessage(role, text = "") {
   log.appendChild(wrap);
   log.scrollTop = log.scrollHeight;
   return wrap;
+}
+
+// Render the agent's cited sources under an assistant bubble.
+function renderSources(wrap, sources) {
+  if (!sources?.length) return;
+  const s = document.createElement("div");
+  s.className = "sources";
+  s.innerHTML =
+    "Sources : " +
+    sources
+      .map((src) =>
+        src.url
+          ? `<a href="${src.url}" target="_blank">${src.title}</a>`
+          : src.title,
+      )
+      .join(" · ");
+  wrap.appendChild(s);
 }
 
 // Render follow-up reply pills under an assistant bubble; clicking one sends it.
@@ -74,6 +112,11 @@ function clearSuggestions() {
   log.querySelectorAll(".suggested-replies").forEach((el) => el.remove());
 }
 
+// One conversation turn. createMessageStream wraps the SDK's message:* events
+// (start → chunks → complete | error) in a single async iterator, so a whole
+// turn reads top-to-bottom here instead of being split across separate event
+// handlers keyed by messageId — the bubble and its accumulated text are just
+// locals. Registered client functions still run automatically mid-turn.
 async function sendMessage(content) {
   const trimmed = content.trim();
   if (!trimmed) return;
@@ -81,72 +124,49 @@ async function sendMessage(content) {
   addMessage("user", trimmed);
   input.value = "";
   sendBtn.disabled = true;
+
+  let wrap = null; // this turn's assistant bubble
+  let raw = ""; // accumulated raw markdown
+  let handled = false; // saw a complete or error event
+
   try {
-    await client.sendMessage(trimmed, {
+    const stream = createMessageStream(client, trimmed, {
       // null (no conversation yet) → undefined so it's omitted from the request body.
-      conversationId: store.get().conversationId ?? undefined,
+      conversationId: session.get().conversationId ?? undefined,
     });
+    for await (const event of stream) {
+      if (event.type === "start") {
+        wrap = addMessage("assistant");
+        wrap.classList.add("streaming");
+        setStatus("écrit…", true);
+      } else if (event.type === "chunk") {
+        raw += event.data.content;
+        wrap.querySelector(".bubble").innerHTML = renderMarkdown(raw);
+        log.scrollTop = log.scrollHeight;
+      } else if (event.type === "complete") {
+        const msg = event.data;
+        // Persist the conversation id so the thread survives reloads.
+        session.set({ ...session.get(), conversationId: msg.conversationId });
+        wrap.classList.remove("streaming");
+        wrap.querySelector(".bubble").innerHTML = renderMarkdown(msg.content);
+        renderSources(wrap, msg.sources);
+        renderSuggestions(wrap, msg.followUpReplies);
+        handled = true;
+      } else if (event.type === "error") {
+        addMessage("assistant", "⚠️ " + event.data.error);
+        handled = true;
+      }
+    }
+    // The stream swallows a pre-stream sendMessage rejection (network, etc.),
+    // ending without any event — surface a generic failure in that case.
+    if (!handled) addMessage("assistant", "⚠️ La requête a échoué.");
   } catch (err) {
     addMessage("assistant", "⚠️ " + (err?.message ?? err));
+  } finally {
+    setStatus("prêt", false);
     sendBtn.disabled = false;
   }
 }
-
-// ─── Streaming wiring ──────────────────────────────────────────────
-client.on("message:start", ({ messageId }) => {
-  const wrap = addMessage("assistant");
-  wrap.classList.add("streaming");
-  bubbles.set(messageId, wrap);
-  statusEl.textContent = "écrit…";
-  statusEl.classList.add("live");
-});
-
-client.on("message:chunk", ({ messageId, content }) => {
-  const wrap = bubbles.get(messageId);
-  if (wrap) {
-    const raw = (rawText.get(messageId) ?? "") + content;
-    rawText.set(messageId, raw);
-    wrap.querySelector(".bubble").innerHTML = renderMarkdown(raw);
-    log.scrollTop = log.scrollHeight;
-  }
-});
-
-client.on("message:complete", (msg) => {
-  // Persist the conversation id onto the request so the thread survives reloads.
-  store.set({ ...store.get(), conversationId: msg.conversationId });
-  const wrap = bubbles.get(msg.id);
-  if (wrap) {
-    wrap.classList.remove("streaming");
-    wrap.querySelector(".bubble").innerHTML = renderMarkdown(msg.content);
-    bubbles.delete(msg.id);
-    rawText.delete(msg.id);
-    if (msg.sources?.length) {
-      const s = document.createElement("div");
-      s.className = "sources";
-      s.innerHTML =
-        "Sources : " +
-        msg.sources
-          .map((src) =>
-            src.url
-              ? `<a href="${src.url}" target="_blank">${src.title}</a>`
-              : src.title,
-          )
-          .join(" · ");
-      wrap.appendChild(s);
-    }
-    renderSuggestions(wrap, msg.followUpReplies);
-  }
-  statusEl.textContent = "prêt";
-  statusEl.classList.remove("live");
-  sendBtn.disabled = false;
-});
-
-client.on("message:error", ({ error }) => {
-  addMessage("assistant", "⚠️ " + error);
-  statusEl.textContent = "erreur";
-  statusEl.classList.remove("live");
-  sendBtn.disabled = false;
-});
 
 // ─── Sending ────────────────────────────────────────────────────────
 form.addEventListener("submit", (e) => {
@@ -164,19 +184,17 @@ input.addEventListener("keydown", (e) => {
 
 // ─── New conversation reset ─────────────────────────────────────────
 newChatBtn?.addEventListener("click", () => {
-  // Resets both the request fields and conversationId; the store re-persists it.
-  store.set(blankRequest());
+  // Clear the collected fields and the conversationId; both stores re-persist.
+  creditForm.reset();
+  session.set({ conversationId: null, values: {} });
   log.innerHTML = "";
-  bubbles.clear();
-  rawText.clear();
-  statusEl.textContent = "prêt";
-  statusEl.classList.remove("live");
+  setStatus("prêt", false);
   input.focus();
 });
 
 // ─── Restore the previous conversation on load ──────────────────────
 async function restoreConversation() {
-  const conversationId = store.get().conversationId;
+  const conversationId = session.get().conversationId;
   if (!conversationId) return;
   try {
     const conv = await client.getConversation(conversationId);
@@ -195,7 +213,7 @@ async function restoreConversation() {
     log.scrollTop = log.scrollHeight;
   } catch {
     // Conversation expired/deleted or network error — start fresh.
-    store.clear();
+    session.set({ conversationId: null, values: {} });
   }
 }
 
