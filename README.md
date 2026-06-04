@@ -11,3 +11,4 @@ Exemples d'intégration du widget AGO sur différents types de sites.
 | Vue.js Single Page | Exemple d'intégration dans une app Vue.js | [Voir la démo](https://useago.github.io/integration-example/vuejs-single-page.html) |
 | Widget AGO – TN | Widget integration for tn.useago.com | [See demo](https://useago.github.io/integration-example/tn.html) |
 | Weendeal AGO chat | Custom plain-JS chat UI on the AGO SDK (loan-consolidation flow) | [Voir la démo](https://useago.github.io/integration-example/weendeal-agent/) |
+| Weendeal Widget | Widget Weendeal embarquable en une seule page HTML | [Voir la démo](https://useago.github.io/integration-example/weendeal-widget.html) |
