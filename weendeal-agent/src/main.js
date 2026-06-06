@@ -1,6 +1,6 @@
 import {
   AgoClient,
-  createStore,
+  createConversationSession,
   createFormCollector,
   createMessageStream,
 } from "@useago/sdk";
@@ -15,40 +15,24 @@ const agentId = "credit2";
 // ─── Configuration ────────────────────────────────────────────────
 const client = new AgoClient({
   baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
-  widgetId:
-    window.AGO_WIDGET_ID ??
-    "ago_widget__U_0uoreN3HwElvncdL8v2fPLdsD9xAZbc1KIFOry2E",
   defaultAgentId: agentId,
   debug: DEV,
 });
 
-// Persisted session: the thread id + the fields gathered so far, so a reload
-// restores both. (The collector's own store is in-memory, so we mirror its
-// values here for persistence.)
-const session = createStore(
-  { conversationId: null, values: {} },
-  { key: agentId },
-);
+// Persisted session: the active conversation id, so a reload restores the thread.
+// Expires after 2h idle by default (pass { ttlMs } to change it).
+const session = createConversationSession({ agentId });
 
-// One call wires the whole conversational form: a store, an `update_credit`
-// function the agent calls to fill fields, and a dynamic context that tells it
-// which fields are still missing. Replaces the hand-rolled updateRequest
-// function, the summarize() context, and the manual register/addDynamicContext.
 const creditForm = createFormCollector({
   name: "credit",
   description:
     "Demande de rachat / regroupement de crédits. Renseigne les champs au fur et à mesure ; ne redemande pas un champ déjà rempli.",
   schema: CREDIT_SCHEMA,
-  initialValues: session.get().values,
 });
+
 creditForm.install(client);
 
-// Mirror collected fields into the persisted session so they survive reloads.
-creditForm.store.subscribe((s) =>
-  session.set({ ...session.get(), values: s.values }),
-);
-
-if (DEV) initDevPanel({ store: creditForm.store, client });
+if (DEV) initDevPanel({ client });
 
 // ─── UI ────────────────────────────────────────────────────────────
 const log = document.getElementById("log");
@@ -115,7 +99,7 @@ async function sendMessage(content) {
   try {
     const stream = createMessageStream(client, trimmed, {
       // null (no conversation yet) → undefined so it's omitted from the request body.
-      conversationId: session.get().conversationId ?? undefined,
+      conversationId: session.get() ?? undefined,
     });
     for await (const event of stream) {
       if (event.type === "start") {
@@ -129,7 +113,7 @@ async function sendMessage(content) {
       } else if (event.type === "complete") {
         const msg = event.data;
         // Persist the conversation id so the thread survives reloads.
-        session.set({ ...session.get(), conversationId: msg.conversationId });
+        session.set(msg.conversationId);
         wrap.classList.remove("streaming");
         wrap.querySelector(".bubble").innerHTML = renderMarkdown(msg.content);
         renderSuggestions(wrap, msg.followUpReplies);
@@ -166,9 +150,9 @@ input.addEventListener("keydown", (e) => {
 
 // ─── New conversation reset ─────────────────────────────────────────
 newChatBtn?.addEventListener("click", () => {
-  // Clear the collected fields and the conversationId; both stores re-persist.
+  // Clear the collected fields and the conversationId.
   creditForm.reset();
-  session.set({ conversationId: null, values: {} });
+  session.clear();
   log.innerHTML = "";
   setStatus("prêt", false);
   input.focus();
@@ -176,7 +160,7 @@ newChatBtn?.addEventListener("click", () => {
 
 // ─── Restore the previous conversation on load ──────────────────────
 async function restoreConversation() {
-  const conversationId = session.get().conversationId;
+  const conversationId = session.get();
   if (!conversationId) return;
   try {
     const conv = await client.getConversation(conversationId);
@@ -195,7 +179,7 @@ async function restoreConversation() {
     log.scrollTop = log.scrollHeight;
   } catch {
     // Conversation expired/deleted or network error — start fresh.
-    session.set({ conversationId: null, values: {} });
+    session.clear();
   }
 }
 

@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AGO · Weendeal (widget intégrable)</title>
 
-    <!-- Pin the SDK to 0.3.4. `mountChatWidget` lives in the `/widget` entry. -->
+    <!-- Local SDK build served at /sdk by bs-config.js. `mountChatWidget` lives in
+         the `/widget` entry; the dev panel (opt-in via ?dev) in `/devtools`. -->
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@0.3.4/widget"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@0.4.0/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@0.4.0/devtools"
         }
       }
     </script>
@@ -29,10 +31,10 @@
 
     <script type="module">
       import { mountChatWidget } from "@useago/sdk/widget";
+      import { initDevPanel } from "@useago/sdk/devtools";
 
       // ─── Configuration ────────────────────────────────────────────────
       const AGENT_ID = "credit2";
-      const STORAGE_KEY = `weendeal:${AGENT_ID}:conversationId`;
 
       // Form schema for the credit-consolidation flow. The agent calls an
       // `update_credit` function to fill these fields as the conversation
@@ -201,8 +203,21 @@
             description:
               "Profession du client. Valeurs : 1=Employé, 2=Cadre, 3=Commerçant, 4=Fonctionnaire, 5=Enseignant, 6=Agriculteur, 7=Artisan, 8=Chef d'entreprise, 9=Profession libérale, 10=VRP, 11=Étudiant, 12=Retraité, 13=Sans profession, 14=Recherche d'emploi, 15=Autre",
             enum: [
-              "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
-              "13", "14", "15",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
             ],
           },
           contrat_travail: {
@@ -213,7 +228,8 @@
           },
           anciennete: {
             type: "number",
-            description: "Ancienneté chez l'employeur actuel, en années pleines",
+            description:
+              "Ancienneté chez l'employeur actuel, en années pleines",
           },
 
           // ── 10. Informations personnelles co-emprunteur ──
@@ -223,19 +239,36 @@
               "Civilité du co-emprunteur. Valeurs : 1=Mr, 2=Mlle, 3=Mme",
             enum: ["1", "2", "3"],
           },
-          cj_nom: { type: "string", description: "Nom de famille du co-emprunteur" },
+          cj_nom: {
+            type: "string",
+            description: "Nom de famille du co-emprunteur",
+          },
           cj_prenom: { type: "string", description: "Prénom du co-emprunteur" },
           cj_dob: {
             type: "string",
-            description: "Date de naissance du co-emprunteur (format YYYY-MM-DD)",
+            description:
+              "Date de naissance du co-emprunteur (format YYYY-MM-DD)",
           },
           cj_profession: {
             type: "string",
             description:
               "Profession du co-emprunteur (mêmes codes que profession). Valeurs : 1=Employé, 2=Cadre, 3=Commerçant, 4=Fonctionnaire, 5=Enseignant, 6=Agriculteur, 7=Artisan, 8=Chef d'entreprise, 9=Profession libérale, 10=VRP, 11=Étudiant, 12=Retraité, 13=Sans profession, 14=Recherche d'emploi, 15=Autre",
             enum: [
-              "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
-              "13", "14", "15",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
             ],
           },
           cj_contrat_travail: {
@@ -253,8 +286,7 @@
           // ── 11. Coordonnées personnelles ──
           civilite: {
             type: "string",
-            description:
-              "Civilité du client. Valeurs : 1=Mr, 2=Mlle, 3=Mme",
+            description: "Civilité du client. Valeurs : 1=Mr, 2=Mlle, 3=Mme",
             enum: ["1", "2", "3"],
           },
           nom: {
@@ -312,9 +344,10 @@
 
       // ─── Mount the widget ─────────────────────────────────────────────
       // mountChatWidget builds its own AgoClient from `config`, renders the full
-      // chat panel, streams replies, shows clickable suggested replies, and
-      // installs the credit form collector for its lifetime. No hand-rolled
-      // message loop, markdown renderer, or DOM wiring needed.
+      // chat panel, streams replies, shows clickable suggested replies, installs
+      // the credit form collector, and persists the conversation across reloads
+      // (see persistConversation below). No hand-rolled message loop, markdown
+      // renderer, or DOM wiring needed.
       const widget = mountChatWidget("#ago-chat", {
         config: {
           baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
@@ -323,8 +356,7 @@
             "ago_widget__U_0uoreN3HwElvncdL8v2fPLdsD9xAZbc1KIFOry2E",
           agent: AGENT_ID,
         },
-        // Resume the previous thread on reload, if one was saved.
-        conversationId: localStorage.getItem(STORAGE_KEY) ?? undefined,
+        persistConversation: true,
         title: "Rachat de crédits",
         welcomeMessage:
           "Bonjour 👋 Je vous accompagne dans votre demande de rachat / regroupement de crédits. Pour commencer, êtes-vous propriétaire de votre logement ?",
@@ -340,13 +372,11 @@
         ],
       });
 
-      // Persist the conversation id so the thread survives reloads. The client
-      // emits `message:complete` (carrying conversationId) at the end of each turn.
-      widget.client.on("message:complete", (msg) => {
-        if (msg?.conversationId) {
-          localStorage.setItem(STORAGE_KEY, msg.conversationId);
-        }
-      });
+      // ─── Dev panel (opt-in via ?dev) ──────────────────────────────────
+      // The widget installs the credit form collector on its client, so the panel
+      // renders its live state and logs each update_credit call from just the client.
+      const DEV = new URLSearchParams(location.search).has("dev");
+      if (DEV) initDevPanel({ client: widget.client });
     </script>
   </body>
 </html>
