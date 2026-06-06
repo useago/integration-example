@@ -14,6 +14,7 @@ Reference for `@useago/sdk` as used from a plain-JavaScript environment.
 - [Client functions](#client-functions)
 - [Context](#context)
 - [Conversation history](#conversation-history)
+- [Conversation session](#conversation-session)
 
 **Also available in the SDK**
 
@@ -274,6 +275,34 @@ for (const m of conv?.messages ?? []) {
 > Example: [src/main.js](src/main.js) (`restoreConversation`) restores the saved
 > conversation on reload.
 
+## Conversation session
+
+Persist the active conversation id **per agent** so a reload lands back in the same
+thread. `createConversationSession` is a thin, opt-in wrapper over the observable store:
+it owns the per-agent storage key and exposes `get` / `set` / `clear`.
+
+```js
+const session = createConversationSession({ agentId: "credit" });
+
+// Resume on the next send (null → undefined so it's omitted on the first turn).
+const stream = createMessageStream(client, content, {
+  conversationId: session.get() ?? undefined,
+});
+
+session.set(msg.conversationId); // capture the id once the turn completes
+session.clear(); // forget it — e.g. on "new chat"
+```
+
+| Option      | Default              | Purpose                                                                      |
+| ----------- | -------------------- | ---------------------------------------------------------------------------- |
+| `agentId`   | —                    | Namespaces the key: `ago:conversation:<agentId>`.                            |
+| `storage`   | `localStorage`       | Any `{ getItem, setItem }`. Pass `sessionStorage` for a tab-scoped thread.   |
+| `keyPrefix` | `"ago:conversation"` | Override the key prefix.                                                      |
+| `ttlMs`     | `7200000` (2h)       | Idle lifetime, refreshed on every `set()`. Pass `Infinity` to never expire.  |
+
+> **Example** ([src/main.js](src/main.js)): one `session` drives both `sendMessage`
+> (resume) and `restoreConversation` (restore the thread on reload).
+
 # Also available in the SDK
 
 ## Conversation list & feedback
@@ -405,6 +434,7 @@ All importable from `@useago/sdk`:
 | `SSEHandler`, `isStreamNetworkError`                                                                | Low-level SSE plumbing.                                                    |
 | pre-built functions (`showToast`, `openUrl`, …) + `withHandler`                                     | See [Pre-built client functions](#pre-built-client-functions).             |
 | `createStore(initial, persist?)`                                                                    | Tiny observable store (`get`/`set`/`subscribe`); pass `{ key }` to persist to localStorage. |
+| `createConversationSession(options)`                                                                | Persist the active conversation id per agent (`get`/`set`/`clear`); TTL'd, storage-injectable. |
 | `createMockClient`                                                                                  | In-memory client for tests (`@useago/sdk/testing`).                        |
 | `AgoError`, `AgoApiError`, `AgoNetworkError`, `AgoStreamError`, `AgoFunctionError`                  | Error subclasses the SDK throws — catch to distinguish failure kinds.      |
 | `FunctionRegistry`, `ClientContextRegistry`, `EventEmitter`, `logger`                               | Internals for advanced usage.                                              |
