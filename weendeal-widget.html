@@ -10,8 +10,8 @@
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@0.4.0/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@0.4.0/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@0.4.2/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@0.4.2/devtools"
         }
       }
     </script>
@@ -351,9 +351,6 @@
       const widget = mountChatWidget("#ago-chat", {
         config: {
           baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
-          widgetId:
-            window.AGO_WIDGET_ID ??
-            "ago_widget__U_0uoreN3HwElvncdL8v2fPLdsD9xAZbc1KIFOry2E",
           agent: AGENT_ID,
         },
         persistConversation: true,
@@ -361,7 +358,6 @@
         welcomeMessage:
           "Bonjour 👋 Je vous accompagne dans votre demande de rachat / regroupement de crédits. Pour commencer, êtes-vous propriétaire de votre logement ?",
         placeholder: "Écris un message…",
-        height: 560,
         forms: [
           {
             name: "credit",
