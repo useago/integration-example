@@ -3,147 +3,40 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AGO · Weendeal (widget intégrable)</title>
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@0.4.3/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@0.4.3/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@0.4.4/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@0.4.4/devtools"
         }
       }
     </script>
+    <title>AGO · Weendeal (widget intégrable)</title>
 
     <style>
-      :root {
-        --navy: #1c2b4a;
-        --blue: #2b7fff;
-        --orange: #f7941e;
-        --ink: #2a3550;
-        --line: #e3e7ee;
-        --bg: #ffffff;
-      }
-
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
 
-      html,
       body {
-        background: var(--bg);
-        height: 100%;
-      }
-
-      body {
-        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-        color: var(--ink);
-        -webkit-font-smoothing: antialiased;
         height: 100vh;
         overflow: hidden;
-      }
-
-      .page {
-        max-width: 1180px;
-        height: 100%;
-        margin: 0 auto;
-        padding: 24px clamp(20px, 4vw, 56px) 0;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-      }
-
-      /* ---------- Logo ---------- */
-      .brand {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-      .brand__mark {
-        width: 46px;
-        height: 46px;
-        border-radius: 50%;
-        background: var(--blue);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 6px 16px rgba(43, 127, 255, 0.35);
-      }
-      .brand__mark svg {
-        width: 26px;
-        height: 26px;
-      }
-      .brand__name {
-        font-size: 34px;
-        font-weight: 700;
-        letter-spacing: -0.5px;
-      }
-      .brand__name .a {
-        color: var(--navy);
-      }
-      .brand__name .b {
-        color: var(--blue);
+        padding: 24px;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
       }
 
-      /* ---------- Headline ---------- */
-      .hero__eyebrow {
-        font-size: clamp(22px, 2.4vw, 32px);
-        font-weight: 400;
-        color: var(--navy);
-        line-height: 1.1;
-      }
-      .hero__title {
-        font-size: clamp(34px, 4.4vw, 56px);
-        font-weight: 800;
-        color: var(--navy);
-        line-height: 1.05;
-        letter-spacing: -1px;
-        margin-top: 4px;
-      }
-      .hl {
-        background: var(--blue);
-        color: #fff;
-        padding: 2px 12px;
-        border-radius: 3px;
-        box-decoration-break: clone;
-        -webkit-box-decoration-break: clone;
-      }
-
-      /* ---------- Stage: bottom-anchored chat box ---------- */
-      .stage {
-        position: relative;
-        margin: clamp(12px, 1.5vw, 18px) auto 0;
-        width: 100%;
-        max-width: 880px;
-        flex: 1 1 auto;
-        min-height: 0;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        padding: 0;
-      }
-
-      .chat-wrap {
-        position: relative;
-        z-index: 2;
-        width: min(720px, 100%);
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-      }
-
+      /* The AGO widget mounts in #ago-chat; this frames + clips it as a centered card. */
       .chat-box {
-        background: #ffffff;
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
+        width: min(720px, 100%);
+        height: min(840px, 100%);
+        border-radius: 16px;
         box-shadow: 0 24px 60px rgba(28, 43, 74, 0.16);
-        flex: 1 1 auto;
-        min-height: 0;
-        /* the AGO widget is mounted here and owns everything inside; it draws its
-           own themed hairline border, so this wrapper only frames + clips it. */
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -155,44 +48,31 @@
         width: 100%;
       }
 
-      /* Theme the AGO widget  */
+      /* Theme the AGO widget (CSS-variable way; the JS `theme:` block is the other) */
       .ago-chat-widget {
         --ago-font: inherit; /* adopt the page's Segoe UI stack */
         --ago-radius: 16px;
-        --ago-brand-color: var(--blue); /* user bubbles + send button */
+        --ago-brand-color: #2b7fff; /* user bubbles + send button */
         --ago-brand-text-color: #ffffff;
-        --ago-header-background: var(--navy); /* deep brand header */
+        --ago-header-background: #1c2b4a; /* deep brand header */
         --ago-header-text-color: #eaf1ff;
-        --ago-text-color: var(--ink);
-        --ago-border-color: var(--line); /* match the page hairlines */
-        --ago-accent-color: var(--blue); /* source badges + reply hover */
+        --ago-text-color: #2a3550;
+        --ago-border-color: #e3e7ee; /* hairlines */
+        --ago-accent-color: #2b7fff; /* source badges + reply hover */
         --ago-messages-background: #f6f8fc; /* soft tint behind the conversation */
       }
 
       @media (max-width: 700px) {
         /* Chat takes over the whole screen on mobile */
-        .page {
+        body {
           padding: 0;
-        }
-        .brand,
-        .hero__eyebrow,
-        .hero__title {
-          display: none;
-        }
-        .stage {
-          margin: 0;
-          max-width: none;
-          padding: 0;
-        }
-        .chat-wrap {
-          width: 100%;
         }
         .chat-box {
-          border: none;
+          width: 100%;
+          height: 100%;
           border-radius: 0;
           box-shadow: none;
         }
-
         .ago-chat-widget {
           --ago-radius: 0;
         }
@@ -201,41 +81,8 @@
   </head>
 
   <body>
-    <main class="page">
-      <!-- Logo -->
-      <div class="brand">
-        <span class="brand__mark">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M12 2.5 4 6v5.5c0 4.7 3.2 8.4 8 9.9 4.8-1.5 8-5.2 8-9.9V6l-8-3.5Z"
-              fill="#fff"
-            />
-            <path d="M12 2.5 4 6v5.5c0 4.7 3.2 8.4 8 9.9V2.5Z" fill="#cfe2ff" />
-          </svg>
-        </span>
-        <span class="brand__name"
-          ><span class="a">Ween</span><span class="b">deal</span></span
-        >
-      </div>
-
-      <!-- Headline -->
-      <p class="hero__eyebrow">Rachat &amp; regroupement de crédits</p>
-      <h1 class="hero__title">
-        Réduisez vos mensualités <span class="hl">dès aujourd'hui</span>
-      </h1>
-
-      <!-- Stage: bottom-anchored chat box. The AGO widget owns everything
-           inside #ago-chat (header, stream, input). -->
-      <div class="stage">
-        <div class="chat-wrap">
-          <div class="chat-box" id="ago-chat"></div>
-        </div>
-      </div>
-    </main>
+    <!-- The AGO widget owns everything inside #ago-chat (header, stream, input). -->
+    <div class="chat-box" id="ago-chat"></div>
 
     <script type="module">
       import { mountChatWidget } from "@useago/sdk/widget";
@@ -542,7 +389,31 @@
               "Adresse email du client (email valide, max 40 caractères)",
           },
         },
-        required: [],
+        required: [
+          "locataire",
+          "detail_projet",
+          "projet_seul",
+          "situation_famille",
+          "nbre_enfant",
+          "nb_credit_conso",
+          "nb_credit_immo",
+          "salaire",
+          "FICP",
+          "deja_restructure",
+          "dob",
+          "nationalite",
+          "profession",
+          "contrat_travail",
+          "anciennete",
+          "civilite",
+          "nom",
+          "prenom",
+          "adresse",
+          "cp",
+          "ville",
+          "pays",
+          "email",
+        ],
       };
 
       const widget = mountChatWidget("#ago-chat", {
@@ -550,20 +421,6 @@
           baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
           agent: AGENT_ID,
         },
-        // Alternative styling path: instead of the `.ago-chat-widget` CSS
-        // variables above, theme the widget from JS here. Uncomment to use.
-        // theme: {
-        //   font: "inherit",
-        //   radius: "16px",
-        //   brand: "#2b7fff",
-        //   brandText: "#ffffff",
-        //   headerBg: "#1c2b4a",
-        //   headerText: "#eaf1ff",
-        //   text: "#2a3550",
-        //   border: "#e3e7ee",
-        //   accent: "#2b7fff",
-        //   messagesBg: "#f6f8fc",
-        // },
         persistConversation: true,
         title: "Rachat de crédits",
         welcomeMessage:

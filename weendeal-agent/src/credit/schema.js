@@ -2,8 +2,8 @@
 // shape createFormCollector consumes — main.js passes it straight through, no
 // transform. Each enum field carries its code legend (e.g. 1=Propriétaire)
 // inline in the description so the agent knows what every value means.
-// required is left empty: fields are filled opportunistically as the
-// conversation surfaces them, never gated.
+// required mirrors DevisProx's mandatory keys (idq=18), limited to the
+// fields defined below; conditional fields stay optional.
 export const CREDIT_SCHEMA = {
   type: "object",
   properties: {
@@ -243,5 +243,29 @@ export const CREDIT_SCHEMA = {
       description: "Adresse email du client (email valide, max 40 caractères)",
     },
   },
-  required: [],
+  required: [
+    "locataire",
+    "detail_projet",
+    "projet_seul",
+    "situation_famille",
+    "nbre_enfant",
+    "nb_credit_conso",
+    "nb_credit_immo",
+    "salaire",
+    "FICP",
+    "deja_restructure",
+    "dob",
+    "nationalite",
+    "profession",
+    "contrat_travail",
+    "anciennete",
+    "civilite",
+    "nom",
+    "prenom",
+    "adresse",
+    "cp",
+    "ville",
+    "pays",
+    "email",
+  ],
 };
