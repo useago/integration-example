@@ -6,8 +6,8 @@
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@0.4.4/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@0.4.4/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@0.4.5/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@0.4.5/devtools"
         }
       }
     </script>
@@ -91,138 +91,174 @@
       // ─── Configuration ────────────────────────────────────────────────
       const AGENT_ID = "credit2";
 
+      // Waiting for clarification from Weendeal for commented propoerties
       const CREDIT_SCHEMA = {
         type: "object",
         properties: {
-          // ── 1. Projet de rachat de crédits ──
+          // ── 1. Informations sur votre logement ──
           locataire: {
             type: "string",
             description:
               "Le client est-il propriétaire de son logement. Valeurs : 1=Propriétaire, 2=Pas propriétaire",
             enum: ["1", "2"],
           },
-          detail_projet: {
+          type_locataire: {
             type: "string",
             description:
-              "Type de démarche souhaitée. Valeurs : 1=Renégocier uniquement le prêt immobilier, 2=Regrouper prêts conso et immo, 3=Regrouper uniquement les prêts conso",
-            enum: ["1", "2", "3"],
-          },
-          projet_seul: {
-            type: "string",
-            description:
-              "Démarche faite seul ou avec un co-emprunteur. Valeurs : 1=Seul, 2=Avec un co-emprunteur",
+              "Valeur: 1=Locataire, 2=Logé à titre gratuit. (Si pas propriétaire)",
             enum: ["1", "2"],
+            requiredWhen: {
+              property: "locataire",
+              value: "2",
+            },
           },
-
-          // ── 2. Situation familiale ──
-          situation_famille: {
+          // valeur_bien: {
+          //   type: "number",
+          //   description:
+          //     "Valeur estimée du bien immobilier détenu par le client, en euros. (Si propriétaire)",
+          //   requiredWhen: {
+          //     property: "locataire",
+          //     value: "1",
+          //   },
+          // },
+          montant_votre_loyer: {
+            type: "number",
+            description:
+              "Montant du loyer mensuel, en euros par mois. (Si locataire)",
+            requiredWhen: {
+              property: "type_locataire",
+              value: "1",
+            },
+          },
+          heberge_gratuit: {
             type: "string",
             description:
-              "Situation familiale du client. Valeurs : 1=Célibataire, 2=Marié(e) / Pacsé(e), 3=Concubin(e), 4=Séparé(e), 5=Divorcé(e), 6=Veuf(ve)",
-            enum: ["1", "2", "3", "4", "5", "6"],
+              "Par qui le client est hébergé. Valeurs : 1=Hébergé(e) par la famille, 2=Hébergé(e) par un tiers, 3=Logement de fonction. (Si logé à titre gratuit)",
+            enum: ["1", "2", "3"],
+            requiredWhen: {
+              property: "type_locataire",
+              value: "2",
+            },
           },
-          nbre_enfant: {
-            type: "number",
-            description: "Nombre d'enfants à charge (de 0 à 9)",
-          },
-
-          // ── 3. Crédits à la consommation ──
+          // ── 2. Crédits immobiliers / crédits à la consommation ──
           nb_credit_conso: {
             type: "number",
             description:
-              "Nombre de crédits à la consommation en cours (de 1 à 12 ; 13 = plus de 12)",
+              "Nombre de crédits à la consommation en cours. Valeurs : 0=0, 1=1, 2=2, 14=3 ou plus",
+            enum: ["0", "1", "2", "14"],
+          },
+          nb_credit_immo: {
+            type: "number",
+            description:
+              "Nombre de crédits immobiliers en cours. Valeurs : 0=0, 1=1, 2=2, 14=3 ou plus",
+            enum: ["0", "1", "2", "14"],
           },
           montant_remboursements_mensuel_conso: {
             type: "number",
             description:
-              "Montant total des remboursements mensuels des crédits conso, en euros par mois (si au moins un crédit conso)",
+              "Montant total des remboursements mensuels des crédits conso, en euros par mois (si au moins 1 crédit conso)",
+            requiredWhen: {
+              property: "nb_credit_conso",
+              op: ">=",
+              value: "1",
+            },
           },
           capitaux_restant_dus_conso: {
             type: "number",
             description:
               "Estimation du capital restant dû (CRD) sur les crédits conso, en euros (si au moins un crédit conso)",
-          },
-
-          // ── 4. Crédits immobiliers ──
-          nb_credit_immo: {
-            type: "number",
-            description:
-              "Nombre de crédits immobiliers en cours (de 0 à 12 ; 13 = plus de 12)",
+            requiredWhen: {
+              property: "nb_credit_conso",
+              op: ">=",
+              value: "1",
+            },
           },
           montant_remboursements_mensuel_immo: {
             type: "number",
             description:
               "Montant total des remboursements mensuels des crédits immobiliers, en euros par mois (si au moins un crédit immo)",
+            requiredWhen: {
+              property: "nb_credit_immo",
+              op: ">=",
+              value: "1",
+            },
           },
           capitaux_restant_dus_immo: {
             type: "number",
             description:
               "Estimation du capital restant dû (CRD) sur les crédits immobiliers, en euros (si au moins un crédit immo)",
+            requiredWhen: {
+              property: "nb_credit_immo",
+              op: ">=",
+              value: "1",
+            },
           },
-          optin_assurance_pret: {
-            type: "string",
-            description:
-              "Le client souhaite une évaluation gratuite de son assurance de prêt (proposé uniquement si 1 ou 2 crédits immo). Valeurs : Y=Oui, N=Non",
-            enum: ["Y", "N"],
-          },
-
-          // ── 5. Besoin de trésorerie ──
+          // ── 3. Besoin de trésorerie ──
           tresorie: {
             type: "number",
             description:
-              "Trésorerie supplémentaire souhaitée, en euros (vide si aucun besoin)",
+              "Optionnel. Montant de trésorerie supplémentaire désirée (nombre, €)",
           },
-
+          // ── 4. Situation familiale ──
+          situation_famille: {
+            type: "string",
+            description:
+              "Situation familiale : Valeurs: 1=Célibataire, 2=Marié(e)/Pacsé(e), 3=En couple, 5=Divorcé(e) ou en instance de divorce, 6=Veuf(ve)",
+            enum: ["1", "2", "3", "5", "6"],
+          },
+          // @todo quoi envoyer si 3 ou plus
+          nbre_enfant: {
+            type: "string",
+            description:
+              "Nombre d'enfants à charge. Valeurs: 0=0, 1=1, 2=2, 3=3 ou plus",
+            enum: ["0", "1", "2", "3"],
+          },
+          profession: {
+            type: "string",
+            description:
+              "Profession du client. Valeurs : 1=Salarié (non cadre), 2=Salarié (cadre), 3=Commerçant / Artisan, 4=Fonctionnaire, 8=Chef d'entreprise, 9=Profession libérale,  12=Retraité, 13=Sans emploi, 15=Autre",
+            enum: ["1", "2", "3", "4", "8", "9", "12", "13", "15"],
+          },
+          contrat_travail: {
+            type: "string",
+            description:
+              "Type de contrat de travail du client. Valeurs : 1=CDI, 2=CDD, 3=Intérimaire, 4=Saisonnier, 5=Travailleur Non Salarié, 7=Secteur Public, 8=Intermittent du spectacle, 9=Autre / Retraité(e). Valeurs possible selon profession: Salarié: 1, 2, 3; Fonctionnaire: 1, 2, 7; Chef d'entreprise: 1, 5; Autre: 1, 2, 3, 4, 8. (Ne s'applique pas aux autres profession)",
+            enum: ["1", "2", "3", "4", "5", "7", "8", "9"],
+            requiredWhen: {
+              property: "profession",
+              value: ["1", "2", "4", "8", "15"],
+            },
+          },
+          // nb_bilan: {
+          //   type: "number",
+          //   description:
+          //     "Nombre de bilans comptables disponibles (si Travailleur Non Salarié / indépendant). Valeurs : 0, 1, 2, 3, 4 ou plus",
+          //   requiredWhen: {
+          //     property: "profession",
+          //     value: ["3", "8", "9"],
+          //   },
+          // },
           // ── 6. Revenus ──
           salaire: {
             type: "number",
             description:
-              "Revenus nets mensuels hors primes du client, en euros par mois",
+              "Revenus nets mensuels avant impôt hors primes du client, en euros par mois",
           },
           prime: {
             type: "number",
             description: "Primes annuelles du client, en euros par an",
           },
-          cj_salaire: {
-            type: "number",
-            description:
-              "Revenus nets mensuels du co-emprunteur, en euros par mois (si co-emprunteur)",
-          },
-          cj_prime: {
-            type: "number",
-            description:
-              "Primes annuelles du co-emprunteur, en euros par an (si co-emprunteur)",
-          },
+
           autres_revenus: {
             type: "number",
             description:
               "Autres revenus mensuels du client (pensions, allocations, loyers perçus…), en euros par mois",
           },
-          cj_autres_revenus: {
-            type: "number",
-            description:
-              "Autres revenus mensuels du co-emprunteur, en euros par mois (si co-emprunteur)",
-          },
-
-          // ── 7. Charges mensuelles (si non propriétaire) ──
-          type_locataire: {
-            type: "string",
-            description:
-              "Statut d'occupation du logement (si le client n'est pas propriétaire). Valeurs : 1=Locataire, 2=Logé à titre gratuit",
-            enum: ["1", "2"],
-          },
-          montant_votre_loyer: {
-            type: "number",
-            description:
-              "Montant du loyer mensuel, en euros par mois (si locataire)",
-          },
-          heberge_gratuit: {
-            type: "string",
-            description:
-              "Par qui le client est hébergé (si logé à titre gratuit). Valeurs : 1=Famille, 2=Tiers, 3=Logement de fonction",
-            enum: ["1", "2", "3"],
-          },
-
+          // ── 7. Charges ──
+          // charges_mensuelles: {
+          //   type: "number",
+          //   description: "Autres charges mensuels du client, en euros par mois",
+          // },
           // ── 8. Informations complémentaires ──
           FICP: {
             type: "string",
@@ -230,114 +266,110 @@
               "Le client est-il fiché FICP (fiché à la Banque de France). Valeurs : 1=Oui, 2=Non",
             enum: ["1", "2"],
           },
-          deja_restructure: {
+          // ── 9. Co-emprunteur ──
+          projet_seul: {
             type: "string",
             description:
-              "Le client a-t-il déjà effectué une restructuration de dettes. Valeurs : 1=Oui, 2=Non",
+              "Démarche faite seul ou avec un co-emprunteur. Valeurs : 1=Seul, 2=Avec un co-emprunteur",
             enum: ["1", "2"],
           },
-
-          // ── 9. Informations personnelles emprunteur ──
-          dob: {
-            type: "string",
-            description: "Date de naissance du client (format YYYY-MM-DD)",
-          },
-          nationalite: {
-            type: "string",
-            description:
-              "Nationalité du client. Valeurs : 1=France, 2=Union européenne, 3=Autres",
-            enum: ["1", "2", "3"],
-          },
-          profession: {
-            type: "string",
-            description:
-              "Profession du client. Valeurs : 1=Employé, 2=Cadre, 3=Commerçant, 4=Fonctionnaire, 5=Enseignant, 6=Agriculteur, 7=Artisan, 8=Chef d'entreprise, 9=Profession libérale, 10=VRP, 11=Étudiant, 12=Retraité, 13=Sans profession, 14=Recherche d'emploi, 15=Autre",
-            enum: [
-              "1",
-              "2",
-              "3",
-              "4",
-              "5",
-              "6",
-              "7",
-              "8",
-              "9",
-              "10",
-              "11",
-              "12",
-              "13",
-              "14",
-              "15",
-            ],
-          },
-          contrat_travail: {
-            type: "string",
-            description:
-              "Type de contrat de travail du client. Valeurs : 1=CDI, 2=CDD, 3=Intérimaire, 4=Saisonnier, 5=Travailleur Non Salarié, 6=CDI (essai), 7=Secteur Public, 8=Intermittent du spectacle, 9=Autre / Retraité(e)",
-            enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
-          },
-          anciennete: {
-            type: "number",
-            description:
-              "Ancienneté chez l'employeur actuel, en années pleines",
-          },
-
-          // ── 10. Informations personnelles co-emprunteur ──
+          // Si project avec co-emprunteur
           cj_civilite: {
             type: "string",
             description:
-              "Civilité du co-emprunteur. Valeurs : 1=Mr, 2=Mlle, 3=Mme",
-            enum: ["1", "2", "3"],
+              "Civilité du co-emprunteur. Valeurs : 1=Mr, 3=Mme (si co-emprunteur)",
+            enum: ["1", "3"],
+            requiredWhen: {
+              property: "projet_seul",
+              value: "2",
+            },
           },
           cj_nom: {
             type: "string",
-            description: "Nom de famille du co-emprunteur",
+            description: "Nom de famille du co-emprunteur (si co-emprunteur)",
+            requiredWhen: {
+              property: "projet_seul",
+              value: "2",
+            },
           },
-          cj_prenom: { type: "string", description: "Prénom du co-emprunteur" },
+          cj_prenom: {
+            type: "string",
+            description: "Prénom du co-emprunteur (si co-emprunteur)",
+            requiredWhen: {
+              property: "projet_seul",
+              value: "2",
+            },
+          },
           cj_dob: {
             type: "string",
             description:
-              "Date de naissance du co-emprunteur (format YYYY-MM-DD)",
+              "Date de naissance du co-emprunteur (format YYYY-MM-DD) (si co-emprunteur)",
+            requiredWhen: {
+              property: "projet_seul",
+              value: "2",
+            },
           },
           cj_profession: {
             type: "string",
             description:
-              "Profession du co-emprunteur (mêmes codes que profession). Valeurs : 1=Employé, 2=Cadre, 3=Commerçant, 4=Fonctionnaire, 5=Enseignant, 6=Agriculteur, 7=Artisan, 8=Chef d'entreprise, 9=Profession libérale, 10=VRP, 11=Étudiant, 12=Retraité, 13=Sans profession, 14=Recherche d'emploi, 15=Autre",
-            enum: [
-              "1",
-              "2",
-              "3",
-              "4",
-              "5",
-              "6",
-              "7",
-              "8",
-              "9",
-              "10",
-              "11",
-              "12",
-              "13",
-              "14",
-              "15",
-            ],
+              "Profession du co-emprunteur. Valeurs : 1=Salarié (non cadre), 2=Salarié (cadre), 3=Commerçant / Artisan, 4=Fonctionnaire, 8=Chef d'entreprise, 9=Profession libérale,  12=Retraité, 13=Sans emploi, 15=Autre. (si co-emprunteur)",
+            enum: ["1", "2", "3", "4", "8", "9", "12", "13", "15"],
+            requiredWhen: {
+              property: "projet_seul",
+              value: "2",
+            },
           },
           cj_contrat_travail: {
             type: "string",
             description:
-              "Type de contrat de travail du co-emprunteur (mêmes codes que contrat_travail). Valeurs : 1=CDI, 2=CDD, 3=Intérimaire, 4=Saisonnier, 5=Travailleur Non Salarié, 6=CDI (essai), 7=Secteur Public, 8=Intermittent du spectacle, 9=Autre / Retraité(e)",
-            enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
+              "Type de contrat de travail du co-emprunteur. Valeurs : 1=CDI, 2=CDD, 3=Intérimaire, 4=Saisonnier, 5=Travailleur Non Salarié, 7=Secteur Public, 8=Intermittent du spectacle, 9=Autre / Retraité(e). Valeurs possible selon profession: Salarié: 1, 2, 3; Fonctionnaire: 1, 2, 7; Chef d'entreprise: 1, 5; Autre: 1, 2, 3, 4, 8. (Ne s'applique pas aux autres profession)",
+            enum: ["1", "2", "3", "4", "5", "7", "8", "9"],
+            requiredWhen: {
+              property: "cj_profession",
+              value: ["1", "2", "4", "8", "15"],
+            },
           },
-          cj_anciennete: {
+          // cj_nb_bilan: {
+          //   type: "number",
+          //   description:
+          //     "Nombre de bilans comptables disponibles (si Travailleur Non Salarié / indépendant). Valeurs : 0, 1, 2, 3 ou plus",
+          //   requiredWhen: {
+          //     property: "projet_seul",
+          //     value: "2",
+          //   },
+          // },
+          cj_salaire: {
             type: "number",
             description:
-              "Ancienneté du co-emprunteur chez son employeur actuel, en années",
+              "Revenus nets mensuels du co-emprunteur, en euros par mois (si co-emprunteur)",
+            requiredWhen: {
+              property: "projet_seul",
+              value: "2",
+            },
           },
-
+          cj_prime: {
+            type: "number",
+            description:
+              "Primes annuelles du co-emprunteur, en euros par an (si co-emprunteur)",
+            requiredWhen: {
+              property: "projet_seul",
+              value: "2",
+            },
+          },
+          cj_autres_revenus: {
+            type: "number",
+            description:
+              "Autres revenus mensuels du co-emprunteur, en euros par mois (si co-emprunteur)",
+            requiredWhen: {
+              property: "projet_seul",
+              value: "2",
+            },
+          },
           // ── 11. Coordonnées personnelles ──
           civilite: {
             type: "string",
-            description: "Civilité du client. Valeurs : 1=Mr, 2=Mlle, 3=Mme",
-            enum: ["1", "2", "3"],
+            description: "Civilité du client. Valeurs : 1=Mr, 3=Mme",
+            enum: ["1", "3"],
           },
           nom: {
             type: "string",
@@ -347,72 +379,58 @@
             type: "string",
             description: "Prénom du client (max 35 caractères)",
           },
-          adresse: {
+          email: {
             type: "string",
-            description: "Adresse postale du client (max 40 caractères)",
+            description:
+              "Adresse email du client (email valide, max 40 caractères)",
           },
-          adresse1: {
+          dob: {
             type: "string",
-            description: "Complément d'adresse (max 40 caractères)",
+            description: "Date de naissance du client (format YYYY-MM-DD)",
           },
           cp: { type: "string", description: "Code postal (5 chiffres)" },
           ville: {
             type: "string",
             description: "Ville de résidence du client (max 40 caractères)",
           },
-          pays: {
+          tel: {
             type: "string",
-            description:
-              "Pays de résidence du client, code ISO (ex: FR, BE, GP, MQ)",
+            description: "Numéro de téléphone du client (10 chiffres)",
           },
-          tel_mobile: {
-            type: "string",
-            description: "Numéro de téléphone mobile du client (10 chiffres)",
-          },
-          tel_domicile: {
-            type: "string",
-            description: "Numéro de téléphone fixe / domicile (10 chiffres)",
-          },
-          tel_bureau: {
-            type: "string",
-            description: "Numéro de téléphone du bureau (10 chiffres)",
-          },
-          periode_appel: {
-            type: "string",
-            description:
-              "Période préférée pour être rappelé. Valeurs : 1=Indifférent, 2=Matin, 3=Après-midi, 4=Soirée",
-            enum: ["1", "2", "3", "4"],
-          },
-          email: {
-            type: "string",
-            description:
-              "Adresse email du client (email valide, max 40 caractères)",
-          },
+
+          // ── 12. Consentements ──
+          // optin_partenaires: {
+          //   type: "string",
+          //   description:
+          //     "Le client souhaite recevoir les offres des partenaires Weendeal. Valeurs : 1=Oui, 2=Non",
+          //   enum: ["1", "2"],
+          // },
+          // optin_contact: {
+          //   type: "string",
+          //   description:
+          //     "Le client accepte d'être contacté(e) par un conseiller expert dans le cadre de sa demande, conformément aux CGU, par mail et téléphone. Valeurs : 1=Oui, 2=Non",
+          //   enum: ["1", "2"],
+          // },
         },
         required: [
           "locataire",
-          "detail_projet",
-          "projet_seul",
-          "situation_famille",
-          "nbre_enfant",
           "nb_credit_conso",
           "nb_credit_immo",
-          "salaire",
-          "FICP",
-          "deja_restructure",
-          "dob",
-          "nationalite",
+          "situation_famille",
+          "nbre_enfant",
           "profession",
-          "contrat_travail",
-          "anciennete",
+          "prime",
+          "autres_revenus",
+          "FICP",
+          "projet_seul",
           "civilite",
           "nom",
           "prenom",
-          "adresse",
+          "email",
+          "dob",
           "cp",
           "ville",
-          "pays",
-          "email",
+          "tel",
         ],
       };
 
@@ -424,7 +442,7 @@
         persistConversation: true,
         title: "Rachat de crédits",
         welcomeMessage:
-          "Bonjour 👋 Je vous accompagne dans votre demande de rachat / regroupement de crédits. Pour commencer, êtes-vous propriétaire de votre logement ?",
+          "Bonjour 👋 Je vous accompagne dans votre demande de rachat de crédits. Je vais vous poser quelques questions pour préparer votre dossier. Une fois le dossier transmis, un conseiller vous contactera pour le finaliser. N'hésitez pas à me poser vos questions au fur et à mesure, je suis là pour vous renseigner. On commence ?",
         placeholder: "Écris un message…",
         forms: [
           {
