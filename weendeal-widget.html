@@ -6,8 +6,8 @@
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@0.4.6/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@0.4.6/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@0.4.7/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@0.4.7/devtools"
         }
       }
     </script>
@@ -91,7 +91,6 @@
       // ─── Configuration ────────────────────────────────────────────────
       const AGENT_ID = "credit2";
 
-      // Waiting for clarification from Weendeal for commented propoerties
       const CREDIT_SCHEMA = {
         type: "object",
         properties: {
@@ -112,15 +111,15 @@
               value: "2",
             },
           },
-          // valeur_bien: {
-          //   type: "number",
-          //   description:
-          //     "Valeur estimée du bien immobilier détenu par le client, en euros. (Si propriétaire)",
-          //   requiredWhen: {
-          //     property: "locataire",
-          //     value: "1",
-          //   },
-          // },
+          estimation_patrimoine: {
+            type: "number",
+            description:
+              "Valeur estimée du bien immobilier détenu par le client, en euros. (Si propriétaire)",
+            requiredWhen: {
+              property: "locataire",
+              value: "1",
+            },
+          },
           montant_votre_loyer: {
             type: "number",
             description:
@@ -203,8 +202,8 @@
           situation_famille: {
             type: "string",
             description:
-              "Situation familiale : Valeurs: 1=Célibataire, 2=Marié(e)/Pacsé(e), 3=En couple, 5=Divorcé(e) ou en instance de divorce, 6=Veuf(ve)",
-            enum: ["1", "2", "3", "5", "6"],
+              "Situation familiale : Valeurs: 1=Célibataire, 2=Marié(e)/Pacsé(e), 3=En couple, 4=Séparé(e) ou en instance de divorce, 5=Divorcé(e), 6=Veuf(ve)",
+            enum: ["1", "2", "3", "4", "5", "6"],
           },
           // @todo quoi envoyer si 3 ou plus
           nbre_enfant: {
@@ -229,15 +228,16 @@
               value: ["1", "2", "4", "8", "15"],
             },
           },
-          // nb_bilan: {
-          //   type: "number",
-          //   description:
-          //     "Nombre de bilans comptables disponibles (si Travailleur Non Salarié / indépendant). Valeurs : 0, 1, 2, 3, 4 ou plus",
-          //   requiredWhen: {
-          //     property: "profession",
-          //     value: ["3", "8", "9"],
-          //   },
-          // },
+          anciennete: {
+            type: "string",
+            description:
+              "Nombre de bilans comptables disponibles. Valeurs : 0=0, 1=1, 2=2, 3=3, 4=4 ou plus (si profession Commerçant/Artisan, Chef d'entreprise ou Profession libérale)",
+            enum: ["0", "1", "2", "3", "4"],
+            requiredWhen: {
+              property: "profession",
+              value: ["3", "8", "9"],
+            },
+          },
           // ── 6. Revenus ──
           salaire: {
             type: "number",
@@ -254,11 +254,6 @@
             description:
               "Autres revenus mensuels du client (pensions, allocations, loyers perçus…), en euros par mois",
           },
-          // ── 7. Charges ──
-          // charges_mensuelles: {
-          //   type: "number",
-          //   description: "Autres charges mensuels du client, en euros par mois",
-          // },
           // ── 8. Informations complémentaires ──
           FICP: {
             type: "string",
@@ -329,15 +324,16 @@
               value: ["1", "2", "4", "8", "15"],
             },
           },
-          // cj_nb_bilan: {
-          //   type: "number",
-          //   description:
-          //     "Nombre de bilans comptables disponibles (si Travailleur Non Salarié / indépendant). Valeurs : 0, 1, 2, 3 ou plus",
-          //   requiredWhen: {
-          //     property: "projet_seul",
-          //     value: "2",
-          //   },
-          // },
+          cj_anciennete: {
+            type: "string",
+            description:
+              "Nombre de bilans comptables disponibles du co-emprunteur. Valeurs : 0=0, 1=1, 2=2, 3=3, 4=4 ou plus (si profession co-emprunteur Commerçant/Artisan, Chef d'entreprise ou Profession libérale)",
+            enum: ["0", "1", "2", "3", "4"],
+            requiredWhen: {
+              property: "cj_profession",
+              value: ["3", "8", "9"],
+            },
+          },
           cj_salaire: {
             type: "number",
             description:
@@ -389,28 +385,18 @@
             description: "Date de naissance du client (format YYYY-MM-DD)",
           },
           cp: { type: "string", description: "Code postal (5 chiffres)" },
-          ville: {
-            type: "string",
-            description: "Ville de résidence du client (max 40 caractères)",
-          },
           tel: {
             type: "string",
             description: "Numéro de téléphone du client (10 chiffres)",
           },
 
           // ── 12. Consentements ──
-          // optin_partenaires: {
-          //   type: "string",
-          //   description:
-          //     "Le client souhaite recevoir les offres des partenaires Weendeal. Valeurs : 1=Oui, 2=Non",
-          //   enum: ["1", "2"],
-          // },
-          // optin_contact: {
-          //   type: "string",
-          //   description:
-          //     "Le client accepte d'être contacté(e) par un conseiller expert dans le cadre de sa demande, conformément aux CGU, par mail et téléphone. Valeurs : 1=Oui, 2=Non",
-          //   enum: ["1", "2"],
-          // },
+          newsletter: {
+            type: "string",
+            description:
+              "Si le client accepte d'être contacté(e) par un conseiller expert, dans le cadre de sa demande conformément aux CGU, par mail et téléphone. Lien pour le CGU https://www.weendeal.com/fr/terms-of-service.html#partenaires Valeurs : Y=Oui, N=Non",
+            enum: ["Y", "N"],
+          },
         },
         required: [
           "locataire",
@@ -429,7 +415,6 @@
           "email",
           "dob",
           "cp",
-          "ville",
           "tel",
         ],
       };
@@ -442,7 +427,7 @@
         persistConversation: true,
         title: "Rachat de crédits",
         welcomeMessage:
-          "Bonjour 👋 Je vous accompagne dans votre demande de rachat de crédits. Je vais vous poser quelques questions pour préparer votre dossier. Une fois le dossier transmis, un conseiller vous contactera pour le finaliser. N'hésitez pas à me poser vos questions au fur et à mesure, je suis là pour vous renseigner. On commence ?",
+          "Bonjour 👋 Je vous accompagne dans votre demande de rachat de crédits. Je vais vous poser quelques questions pour préparer votre dossier, qu'un conseiller finalisera ensuite avec vous. N'hésitez pas à m'interroger au fil de l'échange. Pour commencer, pouvez-vous me décrire brièvement votre situation ?",
         placeholder: "Écris un message…",
         forms: [
           {
