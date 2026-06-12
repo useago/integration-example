@@ -104,20 +104,11 @@
           type_locataire: {
             type: "string",
             description:
-              "Valeur: 1=Locataire, 2=Logé à titre gratuit. (Si pas propriétaire)",
+              "Valeur: 1=Locataire, 2=Hébergé(e). (Si pas propriétaire)",
             enum: ["1", "2"],
             requiredWhen: {
               property: "locataire",
               value: "2",
-            },
-          },
-          estimation_patrimoine: {
-            type: "number",
-            description:
-              "Valeur estimée du bien immobilier détenu par le client, en euros. (Si propriétaire)",
-            requiredWhen: {
-              property: "locataire",
-              value: "1",
             },
           },
           montant_votre_loyer: {
@@ -132,7 +123,7 @@
           heberge_gratuit: {
             type: "string",
             description:
-              "Par qui le client est hébergé. Valeurs : 1=Hébergé(e) par la famille, 2=Hébergé(e) par un tiers, 3=Logement de fonction. (Si logé à titre gratuit)",
+              "Par qui le client est hébergé. Valeurs : 1=Hébergé(e) par la famille, 2=Hébergé(e) par un tiers, 3=Logement de fonction. (Si hébergé)",
             enum: ["1", "2", "3"],
             requiredWhen: {
               property: "type_locataire",
@@ -144,12 +135,6 @@
             type: "number",
             description:
               "Nombre de crédits à la consommation en cours. Valeurs : 0=0, 1=1, 2=2, 14=3 ou plus",
-            enum: ["0", "1", "2", "14"],
-          },
-          nb_credit_immo: {
-            type: "number",
-            description:
-              "Nombre de crédits immobiliers en cours. Valeurs : 0=0, 1=1, 2=2, 14=3 ou plus",
             enum: ["0", "1", "2", "14"],
           },
           montant_remboursements_mensuel_conso: {
@@ -172,6 +157,12 @@
               value: "1",
             },
           },
+          nb_credit_immo: {
+            type: "number",
+            description:
+              "Nombre de crédits immobiliers en cours. Valeurs : 0=0, 1=1, 2=2, 14=3 ou plus",
+            enum: ["0", "1", "2", "14"],
+          },
           montant_remboursements_mensuel_immo: {
             type: "number",
             description:
@@ -192,6 +183,33 @@
               value: "1",
             },
           },
+          estimation_patrimoine: {
+            type: "number",
+            description:
+              "Valeur estimée du ou des biens immobiliers détenus par le client, en euros. (si au moins un crédit immo)",
+            requiredWhen: {
+              property: "nb_credit_immo",
+              op: ">=",
+              value: "1",
+            },
+          },
+          optin_assurance_pret: {
+            type: "string",
+            description:
+              "Indique si le client souhaite également renégocier son assurance de prêt pour faire des économies. Souhaite-t-il recevoir une évaluation gratuite ? Valeurs: Y=Oui, N=Non (si au moins un crédit immo)",
+            enum: ["Y", "N"],
+            requiredWhen: {
+              property: "nb_credit_immo",
+              op: ">=",
+              value: "1",
+            },
+          },
+          detail_projet: {
+            type: "string",
+            description:
+              "Valeurs: 1=Renégocier uniquement le prêt immobilier, 2=Regrouper plusieurs prêts conso et immo, 3=Regrouper uniquement les prêts conso",
+            enum: ["1", "2", "3"],
+          },
           // ── 3. Besoin de trésorerie ──
           tresorie: {
             type: "number",
@@ -202,7 +220,7 @@
           situation_famille: {
             type: "string",
             description:
-              "Situation familiale : Valeurs: 1=Célibataire, 2=Marié(e)/Pacsé(e), 3=En couple, 4=Séparé(e) ou en instance de divorce, 5=Divorcé(e), 6=Veuf(ve)",
+              "Situation familiale : Valeurs: 1=Célibataire, 2=Marié(e) 2=Pacsé(e), 3=En couple, 4=Séparé(e) 4=En instance de divorce, 5=Divorcé(e), 6=Veuf(ve)",
             enum: ["1", "2", "3", "4", "5", "6"],
           },
           // @todo quoi envoyer si 3 ou plus
@@ -247,6 +265,10 @@
           prime: {
             type: "number",
             description: "Primes annuelles du client, en euros par an",
+            requiredWhen: {
+              property: "profession",
+              value: ["1", "2", "4"],
+            },
           },
 
           autres_revenus: {
@@ -348,8 +370,8 @@
             description:
               "Primes annuelles du co-emprunteur, en euros par an (si co-emprunteur)",
             requiredWhen: {
-              property: "projet_seul",
-              value: "2",
+              property: "cj_profession",
+              value: ["1", "2", "4"],
             },
           },
           cj_autres_revenus: {
@@ -426,8 +448,15 @@
         },
         persistConversation: true,
         title: "Rachat de crédits",
-        welcomeMessage:
-          "Bonjour 👋 Je vous accompagne dans votre demande de rachat de crédits. Je vais vous poser quelques questions pour préparer votre dossier, qu'un conseiller finalisera ensuite avec vous. N'hésitez pas à m'interroger au fil de l'échange. Pour commencer, pouvez-vous me décrire brièvement votre situation ?",
+        welcomeMessage: `
+      Reprenez en main votre **pouvoir d'achat** !
+
+      Le rachat de crédit vous permet de rassembler vos prêts en un seul et de **diminuer vos mensualités** jusqu'à -60%.
+
+      Je vais vous poser quelques questions pour préparer votre dossier, ensuite un conseiller expert vous contactera pour finaliser les détails.
+
+      N'hésitez pas à me poser vos questions à tout moment.
+      `,
         placeholder: "Écris un message…",
         forms: [
           {
@@ -435,6 +464,10 @@
             description:
               "Demande de rachat / regroupement de crédits. Renseigne les champs au fur et à mesure ; ne redemande pas un champ déjà rempli.",
             schema: CREDIT_SCHEMA,
+            initialValues: {
+              rejets_3_derniers_mois: "2",
+              pays: "FR",
+            },
           },
         ],
       });
