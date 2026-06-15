@@ -6,8 +6,8 @@
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.0.5/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.0.5/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.0.7/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.0.7/devtools"
         }
       }
     </script>
@@ -22,6 +22,7 @@
 
       body {
         height: 100vh;
+        height: 100dvh; /* track the visible viewport (mobile browser chrome / keyboard) */
         overflow: hidden;
         display: flex;
         align-items: center;
