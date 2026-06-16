@@ -6,8 +6,8 @@
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.0.7/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.0.7/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.0.8/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.0.8/devtools"
         }
       }
     </script>
@@ -109,6 +109,8 @@
       N'hésitez pas à me poser vos questions à tout moment.
       `,
         placeholder: "Écris un message…",
+        formSubmittedMessage:
+          "Votre demande a bien été envoyée. Un conseiller vous contactera rapidement.",
         forms: [
           {
             name: "credit",
@@ -120,6 +122,16 @@
             },
           },
         ],
+
+        onFormSubmitted: ({ name, values, result }) => {
+          console.log("[ago] form submitted:", name, { values, result });
+        },
+        onFormError: ({ name, values, error }) => {
+          console.warn("[ago] form submission failed:", name, {
+            values,
+            error,
+          });
+        },
       });
 
       // ─── Dev panel (opt-in via ?dev) ──────────────────────────────────
