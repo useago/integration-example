@@ -6,8 +6,8 @@
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.0.8/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.0.8/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.0.9/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.0.9/devtools"
         }
       }
     </script>
@@ -104,12 +104,38 @@
 
       // Each widget plays its own greeting as a fake assistant message that streams
       // in on load (see streamIntro), so it reads as if the AI had already replied.
-      const INTRO_GUIDE = `Bonjour, je suis une IA experte en finance personnelle.
-Je vais vous poser quelques questions pour connaître votre situation et voir comment réduire vos mensualités.
-Je vais commencer par vous poser des questions sur vos crédits. Peut-on commencer ?`;
+      const INTRO_GUIDE = `Bonjour, je suis une **IA experte en finance personnelle**.
+Je vais vous poser **quelques questions** pour connaître votre situation et voir comment **réduire vos mensualités**. Peut-on commencer ?`;
 
-      const INTRO_LIBRE = `Bonjour, je suis une IA experte en finance personnelle.
-Expliquez moi votre situation et je vous guide pour baisser vos mensualités.`;
+      const INTRO_LIBRE = `Bonjour, je suis une **IA experte en finance personnelle**.
+**Expliquez moi votre situation** et je vous guide pour baisser vos mensualités.`;
+
+      // ─── Custom client function: wait N seconds ───────────────────────
+      // A client-side tool the agent can call to pause before continuing.
+      // Handlers may be async, so we return a Promise that resolves via
+      // setTimeout. The same definition is registered on both widgets below.
+      const waitFunction = {
+        name: "wait",
+        description:
+          "Marque une pause de N secondes. Appelle cet outil entre deux messages pour attendre avant d'envoyer le message suivant.",
+        parameters: {
+          type: "object",
+          properties: {
+            seconds: {
+              type: "number",
+              description: "Durée de l'attente en secondes (0 à 60).",
+            },
+          },
+          required: ["seconds"],
+        },
+        handler: (args) => {
+          const requested = Number(args.seconds) || 0;
+          const waited = Math.min(Math.max(requested, 0), 60); // clamp 0–60s
+          return new Promise((resolve) => {
+            setTimeout(() => resolve({ ok: true, waited }), waited * 1000);
+          });
+        },
+      };
 
       const widget = mountChatWidget("#ago-chat", {
         config: {
@@ -124,6 +150,10 @@ Expliquez moi votre situation et je vous guide pour baisser vos mensualités.`;
         // the empty state stays blank until it plays.
         welcomeMessage: "",
         placeholder: "Écris un message…",
+        // Render assistant replies in a bubble and drop the header bar (the
+        // .chat-box card already frames the widget).
+        agentBubble: true,
+        showHeader: false,
         formSubmittedMessage:
           "Votre demande a bien été envoyée. Un conseiller vous contactera rapidement.",
         forms: [
@@ -148,6 +178,9 @@ Expliquez moi votre situation et je vous guide pour baisser vos mensualités.`;
           });
         },
       });
+
+      // Expose the `wait` tool to this widget's agent.
+      widget.client.registerFunction(waitFunction);
 
       // ─── Streamed greeting ────────────────────────────────────────────
       // Replay the intro as if the assistant had just typed it. The widget
@@ -214,6 +247,9 @@ Expliquez moi votre situation et je vous guide pour baisser vos mensualités.`;
         welcomeMessage: "",
         placeholder: "Écris un message…",
       });
+
+      // Expose the `wait` tool to this widget's agent too.
+      widget2.client.registerFunction(waitFunction);
 
       // Only greet on a fresh visit; when a previous thread is being resumed we
       // let its real history load instead of stacking the intro on top.
