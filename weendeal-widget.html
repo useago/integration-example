@@ -92,6 +92,16 @@
       // ─── Configuration ────────────────────────────────────────────────
       const AGENT_ID = "credit2";
 
+      // Shown as a fake assistant message that streams in on load (see below),
+      // so it reads as if the AI had already greeted the visitor.
+      const INTRO_MESSAGE = `Reprenez en main votre **pouvoir d'achat** !
+
+Le rachat de crédit vous permet de rassembler vos prêts en un seul et de **diminuer vos mensualités** jusqu'à -60%.
+
+Je vais vous poser quelques questions pour préparer votre dossier, ensuite un conseiller expert vous contactera pour finaliser les détails.
+
+N'hésitez pas à me poser vos questions à tout moment.`;
+
       const widget = mountChatWidget("#ago-chat", {
         config: {
           baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
@@ -99,15 +109,9 @@
         },
         persistConversation: true,
         title: "Rachat de crédits",
-        welcomeMessage: `
-      Reprenez en main votre **pouvoir d'achat** !
-
-      Le rachat de crédit vous permet de rassembler vos prêts en un seul et de **diminuer vos mensualités** jusqu'à -60%.
-
-      Je vais vous poser quelques questions pour préparer votre dossier, ensuite un conseiller expert vous contactera pour finaliser les détails.
-
-      N'hésitez pas à me poser vos questions à tout moment.
-      `,
+        // The greeting is delivered as a streamed assistant message instead of the
+        // static welcome block, so the empty state stays blank until it plays.
+        welcomeMessage: "",
         placeholder: "Écris un message…",
         formSubmittedMessage:
           "Votre demande a bien été envoyée. Un conseiller vous contactera rapidement.",
@@ -133,6 +137,52 @@
           });
         },
       });
+
+      // ─── Streamed greeting ────────────────────────────────────────────
+      // Replay the intro as if the assistant had just typed it. The widget
+      // renders from the client's streaming events (message:answer-complete →
+      // message:chunk → message:complete), so we drive those directly: seed an
+      // in-progress assistant bubble (typing dots), stream the text chunk by
+      // chunk, then mark it done. No backend call and no user message involved.
+      function streamIntro(text) {
+        const client = widget.client;
+        const id = `intro-${Date.now()}`;
+        const base = { id, conversationId: "", role: "assistant", createdAt: new Date() };
+
+        // Seed an empty in-progress assistant message → shows the typing dots.
+        client.eventEmitter.emit("message:answer-complete", {
+          ...base,
+          content: "",
+          status: "IN_PROGRESS",
+        });
+
+        // Stream word by word so the text appears to be typed live.
+        const tokens = text.match(/\S+\s*/g) ?? [text];
+        let i = 0;
+        const timer = setInterval(() => {
+          if (i >= tokens.length) {
+            clearInterval(timer);
+            client.eventEmitter.emit("message:complete", {
+              ...base,
+              content: text,
+              status: "DONE",
+            });
+            return;
+          }
+          client.eventEmitter.emit("message:chunk", {
+            content: tokens[i],
+            conversationId: "",
+            messageId: id,
+          });
+          i++;
+        }, 45);
+      }
+
+      // Only greet on a fresh visit; when a previous thread is being resumed we
+      // let its real history load instead of stacking the intro on top.
+      if (!widget.session?.getLastActiveThread()) {
+        streamIntro(INTRO_MESSAGE);
+      }
 
       // ─── Dev panel (opt-in via ?dev) ──────────────────────────────────
       // The widget installs the credit form collector on its client, so the panel
