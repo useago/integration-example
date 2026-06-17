@@ -27,14 +27,16 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 24px;
         padding: 24px;
         font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
       }
 
-      /* The AGO widget mounts in #ago-chat; this frames + clips it as a centered card. */
+      /* Each AGO widget mounts in a .chat-box; this frames + clips it as a card. */
       .chat-box {
-        width: min(720px, 100%);
+        flex: 1 1 0;
+        max-width: 600px;
         height: min(840px, 100%);
         border-radius: 16px;
         box-shadow: 0 24px 60px rgba(28, 43, 74, 0.16);
@@ -64,13 +66,20 @@
       }
 
       @media (max-width: 700px) {
-        /* Chat takes over the whole screen on mobile */
+        /* Stack the widgets full-width and let the page scroll between them */
         body {
+          flex-direction: column;
+          height: auto;
+          min-height: 100dvh;
+          overflow: auto;
+          gap: 0;
           padding: 0;
         }
         .chat-box {
+          flex: none;
           width: 100%;
-          height: 100%;
+          max-width: none;
+          height: 100dvh;
           border-radius: 0;
           box-shadow: none;
         }
@@ -82,8 +91,9 @@
   </head>
 
   <body>
-    <!-- The AGO widget owns everything inside #ago-chat (header, stream, input). -->
+    <!-- Each AGO widget owns everything inside its box (header, stream, input). -->
     <div class="chat-box" id="ago-chat"></div>
+    <div class="chat-box" id="ago-chat-2"></div>
 
     <script type="module">
       import { mountChatWidget } from "@useago/sdk/widget";
@@ -92,25 +102,26 @@
       // ─── Configuration ────────────────────────────────────────────────
       const AGENT_ID = "credit2";
 
-      // Shown as a fake assistant message that streams in on load (see below),
-      // so it reads as if the AI had already greeted the visitor.
-      const INTRO_MESSAGE = `Reprenez en main votre **pouvoir d'achat** !
+      // Each widget plays its own greeting as a fake assistant message that streams
+      // in on load (see streamIntro), so it reads as if the AI had already replied.
+      const INTRO_GUIDE = `Bonjour, je suis une IA experte en finance personnelle.
+Je vais vous poser quelques questions pour connaître votre situation et voir comment réduire vos mensualités.
+Je vais commencer par vous poser des questions sur vos crédits. Peut-on commencer ?`;
 
-Le rachat de crédit vous permet de rassembler vos prêts en un seul et de **diminuer vos mensualités** jusqu'à -60%.
-
-Je vais vous poser quelques questions pour préparer votre dossier, ensuite un conseiller expert vous contactera pour finaliser les détails.
-
-N'hésitez pas à me poser vos questions à tout moment.`;
+      const INTRO_LIBRE = `Bonjour, je suis une IA experte en finance personnelle.
+Expliquez moi votre situation et je vous guide pour baisser vos mensualités.`;
 
       const widget = mountChatWidget("#ago-chat", {
         config: {
           baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
           agent: AGENT_ID,
         },
-        persistConversation: true,
-        title: "Rachat de crédits",
-        // The greeting is delivered as a streamed assistant message instead of the
-        // static welcome block, so the empty state stays blank until it plays.
+        // Per-agent thread cache so this widget never resumes the other widget's
+        // conversation. The visitor id (`ago_widget_id`) stays shared on purpose.
+        persistConversation: { threadKey: "ago_last_thread_credit2" },
+        title: "Agent guidé",
+        // The greeting is delivered as a streamed assistant message (see below), so
+        // the empty state stays blank until it plays.
         welcomeMessage: "",
         placeholder: "Écris un message…",
         formSubmittedMessage:
@@ -144,10 +155,15 @@ N'hésitez pas à me poser vos questions à tout moment.`;
       // message:chunk → message:complete), so we drive those directly: seed an
       // in-progress assistant bubble (typing dots), stream the text chunk by
       // chunk, then mark it done. No backend call and no user message involved.
-      function streamIntro(text) {
-        const client = widget.client;
+      function streamIntro(handle, text) {
+        const client = handle.client;
         const id = `intro-${Date.now()}`;
-        const base = { id, conversationId: "", role: "assistant", createdAt: new Date() };
+        const base = {
+          id,
+          conversationId: "",
+          role: "assistant",
+          createdAt: new Date(),
+        };
 
         // Seed an empty in-progress assistant message → shows the typing dots.
         client.eventEmitter.emit("message:answer-complete", {
@@ -178,10 +194,31 @@ N'hésitez pas à me poser vos questions à tout moment.`;
         }, 45);
       }
 
+      // Greet the guided agent on a fresh visit (resuming a thread loads its
+      // real history instead, so we skip the intro then).
+      if (!widget.session?.getLastActiveThread()) {
+        streamIntro(widget, INTRO_GUIDE);
+      }
+
+      // ─── Second widget (credit3) ──────────────────────────────────────
+      // This one carries the streamed intro; its empty state stays blank until
+      // the greeting plays (so welcomeMessage is left empty).
+      const widget2 = mountChatWidget("#ago-chat-2", {
+        config: {
+          baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
+          agent: "credit3",
+        },
+        // Its own thread cache key, separate from the credit widget above.
+        persistConversation: { threadKey: "ago_last_thread_credit3" },
+        title: "Agent libre",
+        welcomeMessage: "",
+        placeholder: "Écris un message…",
+      });
+
       // Only greet on a fresh visit; when a previous thread is being resumed we
       // let its real history load instead of stacking the intro on top.
-      if (!widget.session?.getLastActiveThread()) {
-        streamIntro(INTRO_MESSAGE);
+      if (!widget2.session?.getLastActiveThread()) {
+        streamIntro(widget2, INTRO_LIBRE);
       }
 
       // ─── Dev panel (opt-in via ?dev) ──────────────────────────────────
