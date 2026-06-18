@@ -65,6 +65,172 @@
         --ago-messages-background: #f6f8fc; /* soft tint behind the conversation */
       }
 
+      /* ─── "Analyse du dossier" overlay ─────────────────────────────── */
+      .ago-analyze-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(16, 26, 48, 0.55);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        opacity: 0;
+        animation: ago-fade-in 0.3s ease forwards;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      }
+      .ago-analyze-overlay.ago-closing {
+        animation: ago-fade-out 0.35s ease forwards;
+      }
+      .ago-analyze-card {
+        width: min(360px, calc(100vw - 48px));
+        padding: 36px 32px 32px;
+        border-radius: 20px;
+        background: #ffffff;
+        box-shadow: 0 30px 70px rgba(16, 26, 48, 0.35);
+        text-align: center;
+        transform: translateY(12px) scale(0.96);
+        animation: ago-pop-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+      .ago-analyze-doc {
+        position: relative;
+        width: 84px;
+        height: 100px;
+        margin: 0 auto 26px;
+      }
+      /* the document sheet */
+      .ago-analyze-doc .sheet {
+        position: absolute;
+        inset: 0;
+        border-radius: 10px;
+        background: linear-gradient(160deg, #f6f8fc 0%, #ffffff 100%);
+        border: 2px solid #e3e7ee;
+        box-shadow: 0 6px 18px rgba(28, 43, 74, 0.12);
+        overflow: hidden;
+      }
+      /* folded corner */
+      .ago-analyze-doc .sheet::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 22px;
+        height: 22px;
+        background: #e3e7ee;
+        clip-path: polygon(100% 0, 0 0, 100% 100%);
+      }
+      /* text lines on the document */
+      .ago-analyze-doc .line {
+        position: absolute;
+        left: 14px;
+        height: 6px;
+        border-radius: 3px;
+        background: #dde3ee;
+      }
+      .ago-analyze-doc .line.l1 { top: 22px; width: 38px; }
+      .ago-analyze-doc .line.l2 { top: 38px; width: 52px; }
+      .ago-analyze-doc .line.l3 { top: 54px; width: 46px; }
+      .ago-analyze-doc .line.l4 { top: 70px; width: 54px; }
+      /* the scanning beam sweeping over the document */
+      .ago-analyze-doc .scan {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background: linear-gradient(
+          to bottom,
+          rgba(43, 127, 255, 0) 0%,
+          rgba(43, 127, 255, 0.45) 50%,
+          rgba(43, 127, 255, 0) 100%
+        );
+        box-shadow: 0 0 12px 2px rgba(43, 127, 255, 0.5);
+        animation: ago-scan 1.6s ease-in-out infinite;
+      }
+      /* magnifier orbiting the document */
+      .ago-analyze-doc .glass {
+        position: absolute;
+        bottom: -10px;
+        right: -12px;
+        width: 38px;
+        height: 38px;
+        animation: ago-glass-float 1.6s ease-in-out infinite;
+      }
+      .ago-analyze-doc .glass::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 4px solid #2b7fff;
+        background: rgba(43, 127, 255, 0.08);
+      }
+      .ago-analyze-doc .glass::after {
+        content: "";
+        position: absolute;
+        top: 23px;
+        left: 23px;
+        width: 12px;
+        height: 4px;
+        border-radius: 3px;
+        background: #2b7fff;
+        transform: rotate(45deg);
+        transform-origin: left center;
+      }
+      .ago-analyze-title {
+        font-size: 17px;
+        font-weight: 600;
+        color: #1c2b4a;
+        margin-bottom: 6px;
+      }
+      .ago-analyze-status {
+        font-size: 13.5px;
+        color: #6b7691;
+        min-height: 18px;
+        transition: opacity 0.2s ease;
+      }
+      /* progress bar */
+      .ago-analyze-bar {
+        margin-top: 22px;
+        height: 6px;
+        border-radius: 4px;
+        background: #eef1f7;
+        overflow: hidden;
+      }
+      .ago-analyze-bar > i {
+        display: block;
+        height: 100%;
+        width: 30%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #2b7fff, #5fa0ff);
+        animation: ago-indeterminate 1.4s ease-in-out infinite;
+      }
+      @keyframes ago-scan {
+        0%   { top: 4px; }
+        50%  { top: 82px; }
+        100% { top: 4px; }
+      }
+      @keyframes ago-glass-float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        50%      { transform: translate(-6px, -8px) rotate(-8deg); }
+      }
+      @keyframes ago-indeterminate {
+        0%   { transform: translateX(-120%); width: 35%; }
+        50%  { width: 55%; }
+        100% { transform: translateX(320%); width: 35%; }
+      }
+      @keyframes ago-fade-in {
+        to { opacity: 1; }
+      }
+      @keyframes ago-fade-out {
+        to { opacity: 0; }
+      }
+      @keyframes ago-pop-in {
+        to { transform: translateY(0) scale(1); }
+      }
+
       @media (max-width: 700px) {
         /* Stack the widgets full-width and let the page scroll between them */
         body {
@@ -107,10 +273,71 @@
       const INTRO_LIBRE = `Bonjour, je suis une **IA experte en finance personnelle**.
       **Expliquez moi votre situation** et je vous guide pour baisser vos mensualités.`;
 
-      const waitFunction = {
-        name: "wait",
+      // ─── Custom client function: wait N seconds ───────────────────────
+      // A client-side tool the agent can call to pause before continuing.
+      // Handlers may be async, so we return a Promise that resolves via
+      // setTimeout. The same definition is registered on both widgets below.
+
+      // Full-screen "analyse du dossier" animation shown while the wait runs.
+      // Returns a handle with .close() that fades the overlay out and removes it.
+      function showAnalyzeOverlay(durationSeconds) {
+        const overlay = document.createElement("div");
+        overlay.className = "ago-analyze-overlay";
+        overlay.innerHTML = `
+          <div class="ago-analyze-card" role="status" aria-live="polite">
+            <div class="ago-analyze-doc">
+              <div class="sheet">
+                <span class="line l1"></span>
+                <span class="line l2"></span>
+                <span class="line l3"></span>
+                <span class="line l4"></span>
+                <span class="scan"></span>
+              </div>
+              <span class="glass"></span>
+            </div>
+            <div class="ago-analyze-title">Analyse de votre dossier…</div>
+            <div class="ago-analyze-status"></div>
+            <div class="ago-analyze-bar"><i></i></div>
+          </div>`;
+        document.body.appendChild(overlay);
+
+        // Cycle through reassuring status messages over the duration.
+        const steps = [
+          "Lecture de vos informations…",
+          "Vérification de votre situation…",
+          "Calcul des économies possibles…",
+          "Préparation de votre solution…",
+        ];
+        const statusEl = overlay.querySelector(".ago-analyze-status");
+        let i = 0;
+        const tick = () => {
+          statusEl.style.opacity = "0";
+          setTimeout(() => {
+            statusEl.textContent = steps[i % steps.length];
+            statusEl.style.opacity = "1";
+            i += 1;
+          }, 180);
+        };
+        tick();
+        const everyMs = Math.max((durationSeconds * 1000) / steps.length, 700);
+        const timer = setInterval(tick, everyMs);
+
+        return {
+          close(onClosed) {
+            clearInterval(timer);
+            overlay.classList.add("ago-closing");
+            setTimeout(() => {
+              overlay.remove();
+              if (typeof onClosed === "function") onClosed();
+            }, 350);
+          },
+        };
+      }
+
+      const analyzeFunction = {
+        name: "analyse_dossier",
         description:
-          "Marque une pause de N secondes. Appelle cet outil entre deux messages pour attendre avant d'envoyer le message suivant.",
+          "Analyse le dossier",
         parameters: {
           type: "object",
           properties: {
@@ -123,9 +350,16 @@
         },
         handler: (args) => {
           const requested = Number(args.seconds) || 0;
-          const waited = Math.min(Math.max(requested, 0), 60); // clamp 0–60s
+          // No seconds given? Play a believable analysis (~3.5s) by default.
+          const waited = Math.min(Math.max(requested || 3.5, 0.5), 60); // clamp 0.5–60s
           return new Promise((resolve) => {
-            setTimeout(() => resolve({ ok: true, waited }), waited * 1000);
+            const overlay = showAnalyzeOverlay(waited);
+            setTimeout(() => {
+              // Resolve only once the overlay has fully faded out, so the AI's
+              // next message never starts streaming while the animation is still
+              // on screen.
+              overlay.close(() => resolve({ ok: true, waited }));
+            }, waited * 1000);
           });
         },
       };
@@ -174,7 +408,8 @@
         },
       });
 
-      widget.client.registerFunction(waitFunction);
+      // Expose the `wait` tool to this widget's agent.
+      widget.client.registerFunction(analyzeFunction);
 
       function streamIntro(handle, text) {
         const client = handle.client;
@@ -257,7 +492,8 @@
         },
       });
 
-      widget2.client.registerFunction(waitFunction);
+      // Expose the `wait` tool to this widget's agent too.
+      widget2.client.registerFunction(analyzeFunction);
 
       // Only greet on a fresh visit; when a previous thread is being resumed we
       // let its real history load instead of stacking the intro on top.
