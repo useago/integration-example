@@ -6,8 +6,8 @@
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.0.9/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.0.9/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.0.10/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.0.10/devtools"
         }
       }
     </script>
@@ -99,21 +99,14 @@
       import { mountChatWidget } from "@useago/sdk/widget";
       import { initDevPanel } from "@useago/sdk/devtools";
 
-      // ─── Configuration ────────────────────────────────────────────────
       const AGENT_ID = "credit2";
 
-      // Each widget plays its own greeting as a fake assistant message that streams
-      // in on load (see streamIntro), so it reads as if the AI had already replied.
       const INTRO_GUIDE = `Bonjour, je suis une **IA experte en finance personnelle**.
-Je vais vous poser **quelques questions** pour connaître votre situation et voir comment **réduire vos mensualités**. Peut-on commencer ?`;
+      Je vais vous poser **quelques questions** pour connaître votre situation et voir comment **réduire vos mensualités**. Peut-on commencer ?`;
 
       const INTRO_LIBRE = `Bonjour, je suis une **IA experte en finance personnelle**.
-**Expliquez moi votre situation** et je vous guide pour baisser vos mensualités.`;
+      **Expliquez moi votre situation** et je vous guide pour baisser vos mensualités.`;
 
-      // ─── Custom client function: wait N seconds ───────────────────────
-      // A client-side tool the agent can call to pause before continuing.
-      // Handlers may be async, so we return a Promise that resolves via
-      // setTimeout. The same definition is registered on both widgets below.
       const waitFunction = {
         name: "wait",
         description:
@@ -137,6 +130,7 @@ Je vais vous poser **quelques questions** pour connaître votre situation et voi
         },
       };
 
+      // ─── First widget (credit2) ───────────────────────────────────────
       const widget = mountChatWidget("#ago-chat", {
         config: {
           baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
@@ -150,9 +144,10 @@ Je vais vous poser **quelques questions** pour connaître votre situation et voi
         // the empty state stays blank until it plays.
         welcomeMessage: "",
         placeholder: "Écris un message…",
-        // Render assistant replies in a bubble and drop the header bar (the
+        // iMessage-style bubbles on both sides (this also bubbles assistant
+        // replies, so agentBubble is implied) and drop the header bar (the
         // .chat-box card already frames the widget).
-        agentBubble: true,
+        bubbleStyle: "imessage",
         showHeader: false,
         formSubmittedMessage:
           "Votre demande a bien été envoyée. Un conseiller vous contactera rapidement.",
@@ -179,15 +174,8 @@ Je vais vous poser **quelques questions** pour connaître votre situation et voi
         },
       });
 
-      // Expose the `wait` tool to this widget's agent.
       widget.client.registerFunction(waitFunction);
 
-      // ─── Streamed greeting ────────────────────────────────────────────
-      // Replay the intro as if the assistant had just typed it. The widget
-      // renders from the client's streaming events (message:answer-complete →
-      // message:chunk → message:complete), so we drive those directly: seed an
-      // in-progress assistant bubble (typing dots), stream the text chunk by
-      // chunk, then mark it done. No backend call and no user message involved.
       function streamIntro(handle, text) {
         const client = handle.client;
         const id = `intro-${Date.now()}`;
@@ -234,8 +222,6 @@ Je vais vous poser **quelques questions** pour connaître votre situation et voi
       }
 
       // ─── Second widget (credit3) ──────────────────────────────────────
-      // This one carries the streamed intro; its empty state stays blank until
-      // the greeting plays (so welcomeMessage is left empty).
       const widget2 = mountChatWidget("#ago-chat-2", {
         config: {
           baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
@@ -246,9 +232,31 @@ Je vais vous poser **quelques questions** pour connaître votre situation et voi
         title: "Agent libre",
         welcomeMessage: "",
         placeholder: "Écris un message…",
+        formSubmittedMessage:
+          "Votre demande a bien été envoyée. Un conseiller vous contactera rapidement.",
+        forms: [
+          {
+            name: "credit",
+            description:
+              "Demande de rachat / regroupement de crédits. Renseigne les champs au fur et à mesure ; ne redemande pas un champ déjà rempli.",
+            initialValues: {
+              rejets_3_derniers_mois: "2",
+              pays: "FR",
+            },
+          },
+        ],
+
+        onFormSubmitted: ({ name, values, result }) => {
+          console.log("[ago] form submitted:", name, { values, result });
+        },
+        onFormError: ({ name, values, error }) => {
+          console.warn("[ago] form submission failed:", name, {
+            values,
+            error,
+          });
+        },
       });
 
-      // Expose the `wait` tool to this widget's agent too.
       widget2.client.registerFunction(waitFunction);
 
       // Only greet on a fresh visit; when a previous thread is being resumed we
@@ -257,11 +265,19 @@ Je vais vous poser **quelques questions** pour connaître votre situation et voi
         streamIntro(widget2, INTRO_LIBRE);
       }
 
-      // ─── Dev panel (opt-in via ?dev) ──────────────────────────────────
-      // The widget installs the credit form collector on its client, so the panel
-      // renders its live state and logs each update_credit call from just the client.
       const DEV = new URLSearchParams(location.search).has("dev");
-      if (DEV) initDevPanel({ client: widget.client });
+      if (DEV) {
+        initDevPanel({
+          client: widget.client,
+          label: "Agent guidé (credit2)",
+          side: "left",
+        });
+        initDevPanel({
+          client: widget2.client,
+          label: "Agent libre (credit3)",
+          side: "right",
+        });
+      }
     </script>
   </body>
 </html>
