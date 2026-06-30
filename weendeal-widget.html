@@ -9,8 +9,8 @@
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.2.0/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.2.0/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.3.0/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.3.0/devtools"
         }
       }
     </script>
@@ -208,16 +208,16 @@
       const AGENT_ID = "credit2";
 
       const INTRO_GUIDE = `Bonjour, je suis une **IA experte en finance personnelle**.
-      Je vais vous poser **quelques questions** pour connaître votre situation et voir comment **réduire vos mensualités**. Peut-on commencer ?`;
+        Je vais vous poser **quelques questions** pour connaître votre situation et voir comment **réduire vos mensualités**. Peut-on commencer ?`;
 
       function showAnalyzeOverlay() {
         const overlay = document.createElement("div");
         overlay.className = "ago-analyze-overlay";
         overlay.innerHTML = `
-          <div class="ago-analyze-card" role="status" aria-live="polite">
-            <div class="ago-analyze-spinner"></div>
-            <div class="ago-analyze-title">Analyse de votre dossier…</div>
-          </div>`;
+            <div class="ago-analyze-card" role="status" aria-live="polite">
+              <div class="ago-analyze-spinner"></div>
+              <div class="ago-analyze-title">Analyse de votre dossier…</div>
+            </div>`;
         document.body.appendChild(overlay);
         return {
           close(onClosed) {
@@ -262,7 +262,14 @@
         },
         height: "100%", // fill the #ago-chat frame (which sizes per breakpoint)
         title: "CreditProx",
-        welcomeMessage: { message: INTRO_GUIDE, mode: "streaming" },
+        welcomeMessage: {
+          message: INTRO_GUIDE,
+          mode: "streaming",
+          followUpReplies: [
+            "Oui, avec plaisir !",
+            "Explique-moi comment ça fonctionne.",
+          ],
+        },
         placeholder: "Écris un message…",
         bubbleStyle: "imessage",
         showHeader: false,
