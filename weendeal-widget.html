@@ -2,79 +2,123 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.0.11/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.0.11/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.2.0/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.2.0/devtools"
         }
       }
     </script>
-    <title>AGO · Weendeal (widget intégrable)</title>
+    <title>CreditProx · Votre conseiller financier personnel</title>
 
     <style>
+      :root {
+        --brand: #377dff; /* CreditProx blue */
+        --ink: #333333;
+        --line: #eef1f5;
+      }
+
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
 
+      html,
       body {
-        height: 100vh;
-        height: 100dvh; /* track the visible viewport (mobile browser chrome / keyboard) */
-        overflow: hidden;
+        height: 100%;
+      }
+
+      body {
+        /* Fill the visible viewport and let the chat below own the rest. */
+        min-height: 100vh;
+        min-height: 100dvh; /* tracks mobile browser chrome / keyboard */
         display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 24px;
-        padding: 24px;
-        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        flex-direction: column;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        color: var(--ink);
+        background: #ffffff;
         -webkit-font-smoothing: antialiased;
       }
 
-      /* Each AGO widget mounts in a .chat-box; this frames + clips it as a card. */
-      .chat-box {
-        flex: 1 1 0;
-        max-width: 600px;
-        height: min(840px, 100%);
-        border-radius: 16px;
-        box-shadow: 0 24px 60px rgba(28, 43, 74, 0.16);
-        overflow: hidden;
+      /* ─── Top bar: centered CreditProx logo ──────────────────────────── */
+      .site-nav {
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 16px;
+        background: #ffffff;
+        border-bottom: 1px solid var(--line);
+      }
+      .site-logo {
+        height: 36px;
+        width: auto;
+      }
+
+      /* ─── Hero: holds the chat. Mobile-first (stacked) ───────────────── */
+      .hero {
+        flex: 1 1 auto;
+        min-height: 0; /* allow the inner flex column to shrink and scroll */
+        display: flex;
+        background: linear-gradient(180deg, #ffffff 0%, #eef4ff 100%);
+      }
+      .hero-inner {
+        width: 100%;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 16px 16px 18px;
         display: flex;
         flex-direction: column;
-      }
-      /* let the widget's root fill the box so its stream scrolls internally */
-      .chat-box > * {
-        flex: 1 1 auto;
         min-height: 0;
+        gap: 12px;
+      }
+
+      /* Sizing frame + mount target for the AGO widget (the widget renders its
+         own rounded card inside). Mobile-first: a compact card; desktop overrides
+         the size below. */
+      #ago-chat {
+        flex: none;
         width: 100%;
+        height: clamp(240px, 42vh, 340px);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 18px 50px rgba(28, 43, 74, 0.16);
       }
 
-      /* Theme the AGO widget (CSS-variable way; the JS `theme:` block is the other) */
+      /* Theme the AGO widget via its public --ago-* tokens. */
       .ago-chat-widget {
-        --ago-font: inherit; /* adopt the page's Segoe UI stack */
+        --ago-font: inherit; /* adopt the page font */
         --ago-radius: 16px;
-        --ago-brand-color: #2b7fff; /* user bubbles + send button */
+        --ago-brand-color: var(--brand);
         --ago-brand-text-color: #ffffff;
-        --ago-header-background: #1c2b4a; /* deep brand header */
-        --ago-header-text-color: #eaf1ff;
         --ago-text-color: #2a3550;
-        --ago-border-color: #e3e7ee; /* hairlines */
-        --ago-accent-color: #2b7fff; /* source badges + reply hover */
-        --ago-messages-background: #f6f8fc; /* soft tint behind the conversation */
+        --ago-border-color: #e3e7ee;
+        --ago-accent-color: var(--brand);
+        --ago-messages-background: #f6f8fc;
       }
 
-      /* ─── "Analyse du dossier" overlay ─────────────────────────────── */
+      /* Wider message bubbles read better on narrow screens. */
+      .ago-chat-widget .ago-message__content {
+        max-width: 88%;
+      }
+
+      /* ─── "Analyse du dossier" overlay ───────────────────────────────── */
       .ago-analyze-overlay {
         position: fixed;
         inset: 0;
-        z-index: 9999;
+        z-index: 2147483002; /* above the SDK fullscreen sheet + its bar */
         display: flex;
         align-items: center;
         justify-content: center;
         background: rgba(16, 26, 48, 0.55);
-        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
       }
       .ago-analyze-card {
         padding: 32px 36px;
@@ -88,7 +132,7 @@
         height: 40px;
         margin: 0 auto 18px;
         border: 4px solid #e3e7ee;
-        border-top-color: #2b7fff;
+        border-top-color: var(--brand);
         border-radius: 50%;
         animation: ago-spin 0.8s linear infinite;
       }
@@ -103,35 +147,59 @@
         }
       }
 
-      @media (max-width: 700px) {
-        /* Stack the widgets full-width and let the page scroll between them */
-        body {
-          flex-direction: column;
-          height: auto;
-          min-height: 100dvh;
-          overflow: auto;
-          gap: 0;
-          padding: 0;
+      /* ─── Desktop: centered chat card ────────────────────────────────── */
+      @media (min-width: 900px) {
+        .site-nav {
+          padding: 18px 24px;
         }
-        .chat-box {
-          flex: none;
-          width: 100%;
-          max-width: none;
-          height: 100dvh;
-          border-radius: 0;
-          box-shadow: none;
+        .site-logo {
+          height: 46px;
         }
-        .ago-chat-widget {
-          --ago-radius: 0;
+
+        .hero {
+          align-items: center;
+        }
+        .hero-inner {
+          align-items: center;
+          gap: 28px;
+          padding: 40px 24px;
+        }
+
+        #ago-chat {
+          width: 540px;
+          max-width: 540px;
+          height: min(880px, 86vh);
+        }
+      }
+
+      /* ─── Mobile: bottom-anchor the compact card ──────────────────────
+         The compact card size is the base #ago-chat rule; the compact→fullscreen
+         morph is owned by the SDK (automatic on mobile). */
+      @media (max-width: 899px) {
+        .hero-inner {
+          justify-content: flex-end;
         }
       }
     </style>
   </head>
 
   <body>
-    <!-- Each AGO widget owns everything inside its box (header, stream, input). -->
-    <div class="chat-box" id="ago-chat"></div>
-    <div class="chat-box" id="ago-chat-2"></div>
+    <nav class="site-nav">
+      <a href="#" aria-label="CreditProx">
+        <img
+          class="site-logo"
+          src="https://static.devisprox.com/img/v2/image/weendeal/logotype/logo-weendeal/svg/couleur/logo_creditprox-b2c-nobaseline-400x80.svg"
+          alt="CreditProx"
+        />
+      </a>
+    </nav>
+
+    <main class="hero">
+      <div class="hero-inner">
+        <!-- The AGO widget owns everything inside this box (stream + input). -->
+        <div id="ago-chat"></div>
+      </div>
+    </main>
 
     <script type="module">
       import { mountChatWidget } from "@useago/sdk/widget";
@@ -141,9 +209,6 @@
 
       const INTRO_GUIDE = `Bonjour, je suis une **IA experte en finance personnelle**.
       Je vais vous poser **quelques questions** pour connaître votre situation et voir comment **réduire vos mensualités**. Peut-on commencer ?`;
-
-      const INTRO_LIBRE = `Bonjour, je suis une **IA experte en finance personnelle**.
-      **Expliquez moi votre situation** et je vous guide pour baisser vos mensualités.`;
 
       function showAnalyzeOverlay() {
         const overlay = document.createElement("div");
@@ -190,17 +255,23 @@
         },
       };
 
-      // ─── First widget (credit2) ───────────────────────────────────────
       const widget = mountChatWidget("#ago-chat", {
         config: {
           baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
           agent: AGENT_ID,
         },
-        title: "Agent guidé",
+        height: "100%", // fill the #ago-chat frame (which sizes per breakpoint)
+        title: "CreditProx",
         welcomeMessage: { message: INTRO_GUIDE, mode: "streaming" },
         placeholder: "Écris un message…",
         bubbleStyle: "imessage",
         showHeader: false,
+        // Logo shown in the SDK's mobile fullscreen bar.
+        logoUrl:
+          "https://static.devisprox.com/img/v2/image/weendeal/logotype/logo-weendeal/svg/couleur/logo_creditprox-b2c-nobaseline-400x80.svg",
+        // Mobile full-screen is automatic; we only override the breakpoint so it
+        // matches the host's @media (max-width:899px) compact-card rule.
+        mobile: { breakpoint: 899 },
         formSubmittedMessage:
           "Votre demande a bien été envoyée. Un conseiller vous contactera rapidement.",
         forms: [
@@ -217,6 +288,9 @@
 
         onFormSubmitted: ({ name, values, result }) => {
           console.log("[ago] form submitted:", name, { values, result });
+          if (result && result.url) {
+            window.location.href = result.url;
+          }
         },
         onFormError: ({ name, values, error }) => {
           console.warn("[ago] form submission failed:", name, {
@@ -228,52 +302,12 @@
 
       widget.client.registerFunction(analyzeFunction);
 
-      const widget2 = mountChatWidget("#ago-chat-2", {
-        config: {
-          baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
-          agent: "credit3",
-        },
-        title: "Agent libre",
-        welcomeMessage: { message: INTRO_LIBRE, mode: "streaming" },
-        placeholder: "Écris un message…",
-        formSubmittedMessage:
-          "Votre demande a bien été envoyée. Un conseiller vous contactera rapidement.",
-        forms: [
-          {
-            name: "credit",
-            description:
-              "Demande de rachat / regroupement de crédits. Renseigne les champs au fur et à mesure ; ne redemande pas un champ déjà rempli.",
-            initialValues: {
-              rejets_3_derniers_mois: "2",
-              pays: "FR",
-            },
-          },
-        ],
-
-        onFormSubmitted: ({ name, values, result }) => {
-          console.log("[ago] form submitted:", name, { values, result });
-        },
-        onFormError: ({ name, values, error }) => {
-          console.warn("[ago] form submission failed:", name, {
-            values,
-            error,
-          });
-        },
-      });
-
-      widget2.client.registerFunction(analyzeFunction);
-
       const DEV = new URLSearchParams(location.search).has("dev");
       if (DEV) {
         initDevPanel({
           client: widget.client,
           label: "Agent guidé (credit2)",
           side: "left",
-        });
-        initDevPanel({
-          client: widget2.client,
-          label: "Agent libre (credit3)",
-          side: "right",
         });
       }
     </script>
