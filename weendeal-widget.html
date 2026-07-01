@@ -9,8 +9,8 @@
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.3.1/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.3.1/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.3.2/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.3.2/devtools"
         }
       }
     </script>
@@ -87,7 +87,7 @@
       #ago-chat {
         flex: none;
         width: 100%;
-        height: clamp(240px, 42vh, 340px);
+        height: clamp(320px, 60vh, 440px);
         border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 18px 50px rgba(28, 43, 74, 0.16);
@@ -276,8 +276,6 @@
         // Logo shown in the SDK's mobile fullscreen bar.
         logoUrl:
           "https://static.devisprox.com/img/v2/image/weendeal/logotype/logo-weendeal/svg/couleur/logo_creditprox-b2c-nobaseline-400x80.svg",
-        // Mobile full-screen is automatic; we only override the breakpoint so it
-        // matches the host's @media (max-width:899px) compact-card rule.
         mobile: { breakpoint: 899 },
         formSubmittedMessage:
           "Votre demande a bien été envoyée. Un conseiller vous contactera rapidement.",
