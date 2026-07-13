@@ -9,8 +9,8 @@
     <script type="importmap">
       {
         "imports": {
-          "@useago/sdk/widget": "https://esm.sh/@useago/sdk@1.3.2/widget",
-          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk@1.3.2/devtools"
+          "@useago/sdk/widget": "https://esm.sh/@useago/sdk/widget",
+          "@useago/sdk/devtools": "https://esm.sh/@useago/sdk/devtools"
         }
       }
     </script>
@@ -46,6 +46,16 @@
         color: var(--ink);
         background: #ffffff;
         -webkit-font-smoothing: antialiased;
+      }
+
+      /* ─── First screen: nav + hero exactly fill the viewport ─────────────
+         Everything after `.fold` is normal page content, so the document
+         scrolls past 100vh on mobile and desktop. */
+      .fold {
+        min-height: 100vh;
+        min-height: 100dvh; /* tracks mobile browser chrome / keyboard */
+        display: flex;
+        flex-direction: column;
       }
 
       /* ─── Top bar: centered CreditProx logo ──────────────────────────── */
@@ -91,6 +101,50 @@
         border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 18px 50px rgba(28, 43, 74, 0.16);
+      }
+
+      /* Hero copy that shares the fold with the chat. Mobile-first: it stacks
+         above the bottom-anchored chat; desktop places it beside the card. */
+      .hero-copy {
+        display: flex;
+        flex: 1 1 auto; /* fill the space above the chat */
+        flex-direction: column;
+        justify-content: center; /* center the copy in that space */
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+      }
+      .hero-copy .eyebrow {
+        margin-bottom: 0;
+      }
+      .hero-title {
+        font-size: clamp(24px, 6vw, 30px);
+        line-height: 1.15;
+        font-weight: 800;
+        color: #1c2b4a;
+      }
+      .hero-lead {
+        font-size: 15px;
+        line-height: 1.55;
+        color: #5b6b8c;
+      }
+      .hero-points {
+        display: none; /* revealed on desktop, where there is room */
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        list-style: none;
+      }
+      .hero-points li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2a3550;
+      }
+      .hero-points svg {
+        flex: none;
+        color: var(--brand);
       }
 
       /* Theme the AGO widget via its public --ago-* tokens. */
@@ -160,12 +214,29 @@
           align-items: center;
         }
         .hero-inner {
+          flex-direction: row;
           align-items: center;
-          gap: 28px;
+          justify-content: space-between;
+          gap: 48px;
           padding: 40px 24px;
         }
 
+        .hero-copy {
+          flex: 1 1 auto;
+          max-width: 480px;
+        }
+        .hero-title {
+          font-size: clamp(30px, 3vw, 40px);
+        }
+        .hero-lead {
+          font-size: 17px;
+        }
+        .hero-points {
+          display: flex;
+        }
+
         #ago-chat {
+          flex: none;
           width: 540px;
           max-width: 540px;
           height: min(880px, 86vh);
@@ -177,29 +248,678 @@
          morph is owned by the SDK (automatic on mobile). */
       @media (max-width: 899px) {
         .hero-inner {
-          justify-content: flex-end;
+          justify-content: flex-start;
+        }
+      }
+
+      /* ═══ Landing content below the fold ═════════════════════════════════
+         Host-page marketing sections. Every class name is plain (no `ago-`
+         prefix) so it never collides with the widget's own styles. */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      .section {
+        padding: 56px 16px;
+      }
+      .section--alt {
+        background: #f6f9ff;
+      }
+      .section-inner {
+        max-width: 1120px;
+        margin: 0 auto;
+      }
+      .section-head {
+        max-width: 680px;
+        margin: 0 auto 32px;
+        text-align: center;
+      }
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--brand);
+      }
+      .section-title {
+        font-size: 26px;
+        line-height: 1.2;
+        font-weight: 800;
+        color: #1c2b4a;
+      }
+      .section-lead {
+        margin-top: 12px;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #5b6b8c;
+      }
+
+      /* Trust stats band */
+      .stats-band {
+        padding: 30px 16px;
+        background: linear-gradient(135deg, #377dff 0%, #2a5fd0 100%);
+        color: #ffffff;
+      }
+      .stats-grid {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 22px 12px;
+        text-align: center;
+      }
+      .stat-num {
+        font-size: 30px;
+        font-weight: 800;
+        line-height: 1;
+      }
+      .stat-label {
+        margin-top: 6px;
+        font-size: 13px;
+        opacity: 0.9;
+      }
+
+      /* Shared card look (steps + benefits) */
+      .card-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .card {
+        padding: 26px 24px;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 12px 34px rgba(28, 43, 74, 0.06);
+      }
+      .card-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        margin-bottom: 16px;
+        border-radius: 12px;
+        background: #eaf1ff;
+        color: var(--brand);
+      }
+      .card-step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        margin-bottom: 16px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: #ffffff;
+        font-weight: 700;
+      }
+      .card-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1c2b4a;
+      }
+      .card-text {
+        margin-top: 8px;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #5b6b8c;
+      }
+
+      /* Testimonials */
+      .quote {
+        padding: 24px;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 12px 34px rgba(28, 43, 74, 0.06);
+      }
+      .quote p {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #2a3550;
+      }
+      .quote footer {
+        margin-top: 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--brand);
+      }
+
+      /* FAQ (native accordion) */
+      .faq {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+      .faq-item {
+        border-bottom: 1px solid var(--line);
+      }
+      .faq-item summary {
+        position: relative;
+        list-style: none;
+        cursor: pointer;
+        padding: 18px 40px 18px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #1c2b4a;
+      }
+      .faq-item summary::-webkit-details-marker {
+        display: none;
+      }
+      .faq-item summary::after {
+        content: "+";
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 22px;
+        color: var(--brand);
+      }
+      .faq-item[open] summary::after {
+        content: "–";
+      }
+      .faq-item p {
+        padding: 0 0 18px;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #5b6b8c;
+      }
+
+      /* Call to action band */
+      .cta-band {
+        padding: 52px 16px;
+        background: linear-gradient(135deg, #377dff 0%, #2a5fd0 100%);
+        color: #ffffff;
+        text-align: center;
+      }
+      .cta-band h2 {
+        font-size: 26px;
+        font-weight: 800;
+      }
+      .cta-band p {
+        margin-top: 10px;
+        font-size: 16px;
+        opacity: 0.92;
+      }
+      .cta-btn {
+        display: inline-block;
+        margin-top: 22px;
+        padding: 15px 30px;
+        background: #ffffff;
+        color: var(--brand);
+        border-radius: 999px;
+        font-size: 16px;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 14px 30px rgba(16, 26, 48, 0.25);
+      }
+
+      /* Footer */
+      .site-footer {
+        padding: 44px 16px 26px;
+        background: #0f1b34;
+        color: #b7c2da;
+      }
+      .footer-grid {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+      .footer-word {
+        margin-bottom: 14px;
+        font-size: 20px;
+        font-weight: 800;
+        color: #ffffff;
+      }
+      .footer-about {
+        max-width: 360px;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .site-footer h4 {
+        margin-bottom: 12px;
+        color: #ffffff;
+        font-size: 14px;
+      }
+      .site-footer ul {
+        list-style: none;
+      }
+      .site-footer li {
+        margin-bottom: 8px;
+      }
+      .site-footer a {
+        color: #b7c2da;
+        font-size: 14px;
+        text-decoration: none;
+      }
+      .site-footer a:hover {
+        color: #ffffff;
+      }
+      .footer-legal {
+        max-width: 1120px;
+        margin: 30px auto 0;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        font-size: 12px;
+        line-height: 1.6;
+        color: #7f8db0;
+      }
+      .footer-legal p + p {
+        margin-top: 10px;
+      }
+      .footer-legal strong {
+        color: #b7c2da;
+      }
+
+      /* Desktop layout for the landing sections */
+      @media (min-width: 900px) {
+        .section {
+          padding: 80px 24px;
+        }
+        .section-title {
+          font-size: 32px;
+        }
+        .stats-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+        .stat-num {
+          font-size: 38px;
+        }
+        .steps-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .benefits-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .quotes-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .cta-band h2 {
+          font-size: 34px;
+        }
+        .footer-grid {
+          grid-template-columns: 2fr 1fr 1fr;
         }
       }
     </style>
   </head>
 
   <body>
-    <nav class="site-nav">
-      <a href="#" aria-label="CreditProx">
-        <img
-          class="site-logo"
-          src="https://static.devisprox.com/img/v2/image/weendeal/logotype/logo-weendeal/svg/couleur/logo_creditprox-b2c-nobaseline-400x80.svg"
-          alt="CreditProx"
-        />
-      </a>
-    </nav>
+    <div class="fold">
+      <nav class="site-nav">
+        <a href="#" aria-label="CreditProx">
+          <img
+            class="site-logo"
+            src="https://static.devisprox.com/img/v2/image/weendeal/logotype/logo-weendeal/svg/couleur/logo_creditprox-b2c-nobaseline-400x80.svg"
+            alt="CreditProx"
+          />
+        </a>
+      </nav>
 
-    <main class="hero">
-      <div class="hero-inner">
-        <!-- The AGO widget owns everything inside this box (stream + input). -->
-        <div id="ago-chat"></div>
+      <main class="hero">
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <span class="eyebrow">Simulation gratuite en 2 minutes</span>
+            <h1 class="hero-title">
+              Réduisez vos mensualités, simplement en discutant.
+            </h1>
+            <p class="hero-lead">
+              Expliquez votre situation à notre conseiller IA. Il analyse vos
+              crédits en cours et vous propose un regroupement adapté, en direct
+              dans le chat.
+            </p>
+            <ul class="hero-points">
+              <li>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+                Sans engagement
+              </li>
+              <li>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+                Réponse sous 24h
+              </li>
+              <li>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+                Données chiffrées
+              </li>
+            </ul>
+          </div>
+          <!-- The AGO widget owns everything inside this box (stream + input). -->
+          <div id="ago-chat"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- ══════════ Host landing content (scrolls below the fold) ══════════ -->
+
+    <section class="stats-band" aria-label="Chiffres clés">
+      <div class="stats-grid">
+        <div>
+          <div class="stat-num">-60%</div>
+          <div class="stat-label">de mensualités en moins*</div>
+        </div>
+        <div>
+          <div class="stat-num">24h</div>
+          <div class="stat-label">pour une première réponse</div>
+        </div>
+        <div>
+          <div class="stat-num">15 000+</div>
+          <div class="stat-label">familles accompagnées</div>
+        </div>
+        <div>
+          <div class="stat-num">0 €</div>
+          <div class="stat-label">de frais de dossier</div>
+        </div>
       </div>
-    </main>
+    </section>
+
+    <section class="section" id="fonctionnement">
+      <div class="section-inner">
+        <div class="section-head">
+          <span class="eyebrow">Comment ça marche</span>
+          <h2 class="section-title">Trois étapes, zéro paperasse</h2>
+          <p class="section-lead">
+            De la première question à la proposition de votre conseiller, tout
+            se fait en ligne et à votre rythme.
+          </p>
+        </div>
+        <div class="card-grid steps-grid">
+          <div class="card">
+            <div class="card-step-num">1</div>
+            <h3 class="card-title">Discutez avec notre conseiller IA</h3>
+            <p class="card-text">
+              Répondez à quelques questions simples sur votre situation,
+              directement dans le chat. Cela prend deux minutes.
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-step-num">2</div>
+            <h3 class="card-title">Nous analysons votre dossier</h3>
+            <p class="card-text">
+              Notre IA évalue vos crédits en cours et estime votre potentiel
+              d'économies en temps réel.
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-step-num">3</div>
+            <h3 class="card-title">Un expert vous rappelle</h3>
+            <p class="card-text">
+              Un conseiller CreditProx vous propose une offre de regroupement
+              adaptée à votre budget, sans engagement.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt" id="avantages">
+      <div class="section-inner">
+        <div class="section-head">
+          <span class="eyebrow">Pourquoi CreditProx</span>
+          <h2 class="section-title">Reprenez la main sur votre budget</h2>
+        </div>
+        <div class="card-grid benefits-grid">
+          <div class="card">
+            <span class="card-icon">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 2 2 7l10 5 10-5-10-5Z" />
+                <path d="m2 17 10 5 10-5" />
+                <path d="m2 12 10 5 10-5" />
+              </svg>
+            </span>
+            <h3 class="card-title">Une seule mensualité</h3>
+            <p class="card-text">
+              Regroupez vos crédits conso, auto, travaux ou dettes en un unique
+              prélèvement, bien plus simple à gérer.
+            </p>
+          </div>
+          <div class="card">
+            <span class="card-icon">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m23 18-9.5-9.5-5 5L1 6" />
+                <path d="M17 18h6v-6" />
+              </svg>
+            </span>
+            <h3 class="card-title">Jusqu'à -60% par mois</h3>
+            <p class="card-text">
+              Allégez votre budget en étalant votre remboursement sur une durée
+              adaptée à vos revenus.
+            </p>
+          </div>
+          <div class="card">
+            <span class="card-icon">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </span>
+            <h3 class="card-title">Un accompagnement humain</h3>
+            <p class="card-text">
+              Nos conseillers vous suivent de la première question jusqu'au
+              déblocage des fonds.
+            </p>
+          </div>
+          <div class="card">
+            <span class="card-icon">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            </span>
+            <h3 class="card-title">100% en ligne et sécurisé</h3>
+            <p class="card-text">
+              Constituez votre dossier depuis chez vous. Vos données sont
+              chiffrées et ne sont jamais revendues.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="temoignages">
+      <div class="section-inner">
+        <div class="section-head">
+          <span class="eyebrow">Témoignages</span>
+          <h2 class="section-title">Ils ont retrouvé de l'air</h2>
+        </div>
+        <div class="card-grid quotes-grid">
+          <blockquote class="quote">
+            <p>
+              "Grâce à CreditProx, je suis passée de 1 240 € à 690 € de
+              mensualités. Un vrai soulagement pour ma famille."
+            </p>
+            <footer>Sophie M., Lyon</footer>
+          </blockquote>
+          <blockquote class="quote">
+            <p>
+              "Dossier monté en ligne en vingt minutes, rappel dès le lendemain.
+              Rien à voir avec mon passage en agence."
+            </p>
+            <footer>Karim B., Lille</footer>
+          </blockquote>
+          <blockquote class="quote">
+            <p>
+              "J'avais trois crédits, je n'en ai plus qu'un. Le conseiller a été
+              clair et honnête du début à la fin."
+            </p>
+            <footer>Thierry L., Nantes</footer>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt" id="faq">
+      <div class="section-inner">
+        <div class="section-head">
+          <span class="eyebrow">Questions fréquentes</span>
+          <h2 class="section-title">Tout ce que vous voulez savoir</h2>
+        </div>
+        <div class="faq">
+          <details class="faq-item" open>
+            <summary>Le regroupement de crédits, c'est quoi ?</summary>
+            <p>
+              C'est le fait de rassembler plusieurs crédits en un seul, avec une
+              mensualité unique souvent plus basse, étalée sur une durée plus
+              longue.
+            </p>
+          </details>
+          <details class="faq-item">
+            <summary>Est-ce que la simulation coûte quelque chose ?</summary>
+            <p>
+              Non. L'étude de votre dossier et la simulation sont gratuites et
+              sans engagement.
+            </p>
+          </details>
+          <details class="faq-item">
+            <summary>Suis-je éligible si j'ai déjà plusieurs crédits ?</summary>
+            <p>
+              Chaque situation est étudiée individuellement. Le regroupement
+              s'adresse justement aux personnes cumulant plusieurs crédits ou
+              mensualités.
+            </p>
+          </details>
+          <details class="faq-item">
+            <summary>Combien de temps pour obtenir une réponse ?</summary>
+            <p>
+              Une première réponse de principe est généralement donnée sous 24h
+              après votre échange avec le conseiller.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <h2>Prêt à alléger vos mensualités ?</h2>
+      <p>La simulation prend deux minutes et n'engage à rien.</p>
+      <a class="cta-btn" href="#ago-chat">Démarrer ma simulation gratuite</a>
+    </section>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-word">CreditProx</div>
+          <p class="footer-about">
+            CreditProx accompagne les particuliers dans le regroupement et le
+            rachat de leurs crédits pour retrouver un budget plus serein.
+          </p>
+        </div>
+        <div>
+          <h4>Liens utiles</h4>
+          <ul>
+            <li><a href="#fonctionnement">Comment ça marche</a></li>
+            <li><a href="#avantages">Avantages</a></li>
+            <li><a href="#temoignages">Témoignages</a></li>
+            <li><a href="#faq">Questions fréquentes</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Informations</h4>
+          <ul>
+            <li><a href="#">Mentions légales</a></li>
+            <li><a href="#">CGU</a></li>
+            <li><a href="#">Politique de confidentialité</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-legal">
+        <p>
+          <strong>Un crédit vous engage et doit être remboursé.</strong>
+          Vérifiez vos capacités de remboursement avant de vous engager.
+        </p>
+        <p>
+          *Économies constatées variables selon les dossiers et non garanties.
+          CreditProx est un intermédiaire en opérations de banque et en services
+          de paiement (IOBSP). Aucun versement ne peut être exigé avant
+          l'obtention des fonds (art. L. 519-6 du Code monétaire et financier).
+        </p>
+        <p>
+          © 2025 CreditProx. Cette page est une démonstration d'intégration du
+          widget AGO.
+        </p>
+      </div>
+    </footer>
 
     <script type="module">
       import { mountChatWidget } from "@useago/sdk/widget";
@@ -257,8 +977,9 @@
 
       const widget = mountChatWidget("#ago-chat", {
         config: {
-          baseUrl: window.AGO_BASE_URL ?? "https://weendeal.api.useago.com",
+          baseUrl: window.AGO_BASE_URL ?? "http://127.0.0.1:8000",
           agent: AGENT_ID,
+          clientFunctionsMode: "placeholder",
         },
         height: "100%", // fill the #ago-chat frame (which sizes per breakpoint)
         title: "CreditProx",
@@ -306,6 +1027,19 @@
       });
 
       widget.client.registerFunction(analyzeFunction);
+
+      // CTA → focus the chat input and scroll back to the top so the whole
+      // chat is in view. On mobile, focusing the input also makes the widget
+      // morph into its fullscreen sheet (its `tap`/`focus` trigger) and opens
+      // the keyboard. `preventScroll` stops the input's own scroll from
+      // fighting the scroll-to-top on desktop.
+      document.querySelector(".cta-btn")?.addEventListener("click", (event) => {
+        event.preventDefault();
+        widget.element
+          .querySelector("textarea")
+          ?.focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
 
       const DEV = new URLSearchParams(location.search).has("dev");
       if (DEV) {
